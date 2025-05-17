@@ -1,0 +1,53 @@
+@name 
+@inputs 
+@outputs 
+@persist EntList:array 
+@trigger 
+
+if(first()|duped()){
+    
+    #ranger flags
+    rangerHitEntities(1)
+    rangerHitWater(1)
+    rangerIgnoreWorld(1)
+    rangerDefaultZero(0)
+    
+    #ranger flags in shorthand
+    rangerFlags("ewz") 
+    
+    print(rangerFlags())
+    
+    #Basic array used for filtering ranger
+    Entlist = array(owner(),entity())
+    
+    #Uses the array above to filter out that in the array
+    rangerFilter(EntList)
+    
+    runOnTick(1)
+    holoCreate(1)
+}
+
+        #rangerOffset(Maximum Distance, Position of Ranger, Direction of ranger)
+Ranger = rangerOffset(1000, entity():pos(), entity():forward())
+
+#sets the holo's position to the end of the ranger beam - NOTE: position is not the pos()
+holoPos(1, Ranger:position())
+
+#if the ranger hits and whatever it hits is not the world 
+if(Ranger:hit() && !Ranger:hitWorld()){
+    
+    #prints the rangers distance
+    print(round(Ranger:distance()))
+    
+    #Prints what entity the ranger hit
+    print(Ranger:entity():toString())
+    
+    #Prints the vector the beam hit
+    print(Ranger:pos())
+    
+    #Other commands
+    #Ranger:matType()
+    #Ranger:hitGroup()
+    #
+    
+}

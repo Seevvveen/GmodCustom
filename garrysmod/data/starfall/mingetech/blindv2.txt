@@ -1,0 +1,31 @@
+--@name
+--@author
+--@shared
+
+if SERVER then
+    Target = find.playersByName("Seven", false, false)[1]
+    local Music = sound.create(Target, "weapons/nyan/nyan_loop.wav")
+    Music:play()
+    
+    local TargetShootPos = Target:getShootPos()
+    local HoloPos = TargetShootPos+(Target:getEyeAngles():getForward()*30)
+    
+    local HoloTable = {}
+    for i = 1,200 do
+        --find.playersByName("koolaid")[1]:getShootPos()
+        local tempHolo = hologram.create(TargetShootPos, Angle(math.rand(-360,360),math.rand(-360,360),math.rand(-360,360)), "models/dog.mdl", Vector(1))
+        tempHolo:setColor(Color(math.random(360),255,255):hsvToRGB())
+        tempHolo:setMaterial("hlmv/debugmrmwireframe")
+        tempHolo:setParent(Target)
+        table.insert(HoloTable,table.count(HoloTable)+1,tempHolo)
+    end
+
+    hook.add("tick", "SpinnerFunc", function()
+        for i,v in pairs(HoloTable) do
+            v:setAngles(Angle(math.rand(-360,360),math.rand(-360,360),math.rand(-360,360)))
+        end
+    end)
+    
+    
+    
+end

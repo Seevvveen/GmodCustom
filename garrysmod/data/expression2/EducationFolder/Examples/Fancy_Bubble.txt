@@ -1,0 +1,178 @@
+@name Security Bubble
+@inputs SecurityToggle TextToggle Spin
+@outputs 
+@persist InTheBubble:array Bubble TAng RAng
+@trigger 
+
+interval(100)
+
+Base = entity()
+Size = 48
+FirstAng = ang(0,0,0)
+
+
+if(first()|duped()){
+    
+    holoCreate(1)
+        holoModel(1, "models/holograms/icosphere3.mdl")
+        holoParent(1, Base)
+        holoMaterial(1, "")
+        holoDisableShading(1, 1)
+        holoScale(1, vec(Size))
+        holoAlpha(1, 255)
+        holoColor(1, vec(35))
+            holoAng(1,FirstAng)
+    
+    holoCreate(2)
+        holoModel(2, "models/holograms/icosphere3.mdl")
+        holoParent(2, Base)
+        holoMaterial(2, "")
+        holoDisableShading(2, 1)
+        holoScale(2, vec(-Size))
+        holoAlpha(2, 75)
+        holoColor(2, vec(35))    
+            holoAng(2,FirstAng)
+    
+    holoCreate(3)
+        holoModel(3, "models/holograms/icosphere3.mdl")
+        holoParent(3, Base)
+        holoMaterial(3, "models/wireframe")
+        holoDisableShading(3, 1)
+        holoScale(3, vec(Size)*1.001)
+        holoAlpha(3, 255)
+        holoColor(3, vec(255))    
+            holoAng(3,FirstAng)
+
+    holoCreate(4)
+        holoModel(4, "models/holograms/icosphere3.mdl")
+        holoParent(4, Base)
+        holoMaterial(4, "models/wireframe")
+        holoDisableShading(4, 1)
+        holoScale(4, vec(-Size)*0.999)
+        holoAlpha(4, 255)
+        holoColor(4, vec(255))
+            holoAng(4,FirstAng)
+
+    
+    ####Creating Holos for floating text####
+    holoCreate(5)
+        holoAlpha(5, 0)
+    
+    holoCreate(6)
+        holoModel(6,"models/sprops/misc/alphanum/alphanum_s.mdl")
+        holoAlpha(6, 0)
+        
+    holoCreate(7)
+        holoModel(7,"models/sprops/misc/alphanum/alphanum_e.mdl")
+        holoAlpha(7, 0)
+        
+    holoCreate(8)
+        holoModel(8,"models/sprops/misc/alphanum/alphanum_v.mdl")
+        holoAlpha(8, 0)
+        
+    holoCreate(9)
+        holoModel(9,"models/sprops/misc/alphanum/alphanum_e.mdl")
+        holoAlpha(9, 0)
+        
+    holoCreate(10)
+        holoModel(10,"models/sprops/misc/alphanum/alphanum_n.mdl")
+        holoAlpha(10, 0)
+}
+
+
+
+
+####
+#Find Players
+findExcludeEntity(owner())
+findExcludePlayerProps("Seven")
+findIncludeClass("player")          #
+findIncludeClass("prop")
+findIncludeClass("vehicle")
+findIncludeClass("")
+
+
+findInSphere(entity():pos(),350)    #FindCommand
+PlayersInTheBubble = findToArray()         #Data From Find
+
+
+
+
+
+SecurityToggle =1
+if(SecurityToggle == 1){
+    foreach(I:number, Ent:entity = PlayersInTheBubble){
+        boom2(PlayersInTheBubble[I,entity]:pos(),inf(),100)
+    }
+    RAng += 5
+    
+    holoAng(1,ang(RAng,RAng,RAng))
+    holoAng(2,ang(RAng,RAng,RAng))
+    holoAng(3,ang(RAng,RAng,RAng))
+    holoAng(4,ang(RAng,RAng,RAng))
+}
+
+if(Spin == 1){
+        
+
+}
+
+
+
+
+if(TextToggle == 1){
+
+    TAng+=10
+
+    
+    holoPos(5,entity():toWorld(vec(-30,0,0)))
+        holoAng(5,ang(90,TAng,90))
+
+    holoPos(6,holoEntity(5):toWorld(vec(-30,-40,300)))
+    holoAng(6,holoEntity(5):toWorld(ang(0,-90,90)))
+        holoAlpha(6,255)
+        
+    holoPos(7,holoEntity(5):toWorld(vec(-30,-20,300)))
+    holoAng(7,holoEntity(5):toWorld(ang(0,-90,90)))
+        holoAlpha(7,255)
+        
+    holoPos(8,holoEntity(5):toWorld(vec(-30,0,300)))
+    holoAng(8,holoEntity(5):toWorld(ang(0,-90,90)))
+        holoAlpha(8,255)
+        
+    holoPos(9,holoEntity(5):toWorld(vec(-30,20,300)))
+    holoAng(9,holoEntity(5):toWorld(ang(0,-90,90)))
+        holoAlpha(9,255)
+        
+    holoPos(10,holoEntity(5):toWorld(vec(-30,40,300)))
+    holoAng(10,holoEntity(5):toWorld(ang(0,-90,90)))
+        holoAlpha(10,255)
+        
+    if(SecurityToggle == 1){
+        holoColor(6,vec(255,0,0))
+        holoColor(7,vec(255,0,0))
+        holoColor(8,vec(255,0,0))
+        holoColor(9,vec(255,0,0))
+        holoColor(10,vec(255,0,0))
+    }
+    elseif(SecurityToggle == 0){
+        holoColor(6,vec(0,255,0))
+        holoColor(7,vec(0,255,0))
+        holoColor(8,vec(0,255,0))
+        holoColor(9,vec(0,255,0))
+        holoColor(10,vec(0,255,0))
+    }
+}
+
+elseif(TextToggle == 0){
+        holoAlpha(5,0)
+        holoAlpha(6,0)
+        holoAlpha(7,0)
+        holoAlpha(8,0)
+        holoAlpha(9,0)
+        holoAlpha(10,0)
+    }
+
+
+
+

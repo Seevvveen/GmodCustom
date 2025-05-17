@@ -1,0 +1,31 @@
+@name E2Wiki-Fluid_Movement
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+
+runOnTick(1)
+
+
+findByModel("models/hunter/blocks/cube075x075x075.mdl")   #3x3 builders cube 
+findIncludePlayerProps(owner())
+Prop = find()                             
+
+
+
+DesiredPos = entity():pos() + vec(0,0,50)   #makes the Target Position of the prop 50 units above the chip
+Mul = 4  #How fast should the prop be moving 
+
+
+# Detailed version
+Difference =    DesiredPos - Prop:pos()
+TargetVel =     Difference * Mul
+Acceleration =  TargetVel - Prop:vel()
+AntiGravity =   propGravity() * -1 * tickInterval()
+    
+Prop:applyForce((Acceleration+AntiGravity) * Prop:mass())
+
+
+### Compact version ###
+#Prop:applyForce( ( (DesiredPos-Prop:pos())*Mul-Prop:vel() - propGravity()*tickInterval() )*Prop:mass() )

@@ -1,0 +1,20 @@
+--@name Colors.txt
+--@shared
+
+
+if SERVER then
+        for I = 0, 100, 1 do
+            RAH = hologram.create(chip():getPos(), Angle(0,0,0), "models/dog.mdl",Vector(100,100,100))
+            RAH:setAngles(Angle(math.random(360),math.random(360),math.random(360)))
+            RAH:setMaterial("hlmv/debugmrmwireframe")
+            RAH:setColor(Color(math.random(360),255,255):hsvToRGB())
+            --RAH:suppressEngineLighting(true)
+            RAH:setParent(chip())  
+        end
+end
+
+if SERVER then
+    hook.add("tick","asd",function()
+        chip():setAngles(Angle(math.random(360),math.random(360),math.random(360)))
+    end) 
+end

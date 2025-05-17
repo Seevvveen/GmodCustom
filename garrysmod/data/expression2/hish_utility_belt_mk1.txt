@@ -1,0 +1,423 @@
+@name Hish utility BELT mk1
+@persist SelectionMode PortalAllPlayers PortalInversion GunType ARTFiremode AlternateFire
+@persist [Owner Chip]:entity [TrustsMe PortalJumpadEnts]:array [AddedEnts]:table Time
+@persist Telluric TelluricGuns:array
+@outputs CPUUsage Ops HRS HC
+
+#interval(50)
+
+CPUUsage = entity():cpuUsage()*1000000
+Ops = entity():ops()
+HRS = holoRemainingSpawns()
+
+#entity():propNotSolid(1)
+
+if (first()) {
+    Owner = owner()
+    Chip = entity()
+    
+    #runOnTick(1)
+    #runOnChat(1)
+    runOnLast(1)
+    runOnKeys(Owner, 1)
+    
+    #include "libraries/multi-holo"
+    #include "libraries/railguns"
+    #include "libraries/artillery"
+    
+        
+    #include "libraries/swords"
+    #include "libraries/portals"
+    #include "libraries/jumppads"
+    
+    
+        
+    Chip:setMass(50000)
+    #Chip:setAlpha(0)
+
+    function void selectionMode(Active) {
+        if (Active) {
+            SelectionMode = 1
+            Chip:setColor(vec(0, 255, 0))
+        }
+        else {
+            SelectionMode = 0   
+            PortalInversion = 0
+            Chip:setColor(vec(255))
+        }
+    }
+    
+    function void transmuteGun(Entity:entity){
+        if (GunType == 0) {
+            transmuteRailgun(Entity)
+        }
+        elseif (GunType == 2) {
+            transmuteArtillery(Entity)
+        }
+    }
+    
+    function void clean(){
+        for (I = 1, Railguns:count()) {
+            soundStop("RGHum" + I)
+        }
+
+        propDeleteAll()
+        Harpoons = table()
+        Ammo = 0
+        Telluric = 0
+        
+        hint("returning transmutions to the ground", 5)        
+    }
+
+    JPadPower = 2000
+    PortalAllPlayers = 1
+    AlternateFire = 1
+}
+
+
+#######################################################################
+#chat commands
+
+if (chatClk(Owner)) {
+    local LS = Owner:lastSaid()
+    
+    if (LS:sub(1,8) == "!portal ") {
+        local Person = findPlayerByName(LS:sub(9))
+        hideChat(1)
+
+        if (Person) {
+            local PortalPos = Person:toWorld(vec(160, 0, 40))
+            if (PortalPos:isInWorld()) {
+                portalCreate(Owner:toWorld(vec(80, 0, 40)), PortalPos, 0)
+            }
+            else {
+                hint("portal not in world", 5)
+            }
+        }
+        else {
+            hint("Couldn't find player", 5)
+        }
+    }
+
+    if (LS:sub(1, 3) == "!ae") {
+        local Ent = Owner:aimEntity()
+        hideChat(1)
+
+        if (Ent) {
+             AddedEnts:pushArray(array(Ent, Time + 15))
+            hint("added " + Ent:type(),5)        
+        }
+        else {
+            hint("Couldn't find entity",5)
+        }
+    }
+    
+    if (LS:sub(1, 12) == "!entallowall") {
+        hideChat(1)
+
+        if (PortalAllPlayers) {
+            PortalAllPlayers = 0
+        }
+        else {
+            PortalAllPlayers = 1
+        }
+        hint("Allow All Players | " + PortalAllPlayers, 5)
+    }    
+    
+    if (LS:sub(1,9) == "!telluric") {
+        hideChat(1)
+        if (!Telluric) {
+            Telluric = 1
+        }
+        else {
+            Telluric = 0
+        }
+        hint("Telluric Blasters | " + Telluric, 5)
+    }
+      
+    if (LS:sub(1, 4) == "!alt") {
+        hideChat(1)
+
+        if (!AlternateFire) {
+            AlternateFire = 1
+        }
+        else {
+            AlternateFire = 0
+        }
+
+        hint("Alternate Fire | " + AlternateFire, 5)
+    }
+        
+    if (LS:sub(1, 11) == "!jpadpower ") {
+        hideChat(1)
+        JPadPower = LS:sub(12):toNumber()
+        hint("Jump Pad Power | " + JPadPower, 5)
+    }
+}
+
+#######################################################################
+#button commands
+
+event keyPressed(Player:entity, Key:string, Down:number, KeyBind:string) {
+    if (Player == Owner && Down) {
+        switch (Key:lower()) {
+            case "y", # On Key
+                if (!SelectionMode) {
+                    hint("alchemy active", 5)
+                    selectionMode(1)
+                }
+                else {
+                    hint("alchemy cancelled", 5)
+                    selectionMode(0)
+                }
+            break,
+            
+            case "o", # delete key
+                clean()
+            break,
+            
+            case "e",
+                if (SelectionMode) {
+                    hint("transmuting ground",5)
+                    if (Owner:weapon():type() == "weapon_physcannon") {
+                        local NewSword = propSpawn("models/props_c17/TrapPropeller_Blade.mdl",Owner:eyeTraceCursor():position()+vec(0,0,30),ang(0,0,0),0)
+                        NewSword:applyForce(vec(0,0,30)*NewSword:mass())
+                        NewSword:soundPlay(6500+TempSwords:count(),2,"ui/item_knife_large_pickup.wav")
+                        soundPitch(6500+TempSwords:count(),randint(70,100))
+                        transmuteSword(NewSword)
+        
+                        TempSwords:pushArray(array(NewSword,Seconds+15))
+                        selectionMode(0)  
+                    }
+                    elseif(Owner:weapon():type() == "weapon_physgun") {
+                        local NewSword = propSpawn("models/hunter/plates/plate05x2.mdl",Owner:eyeTraceCursor():position()+vec(0,0,30),ang(0,0,0),0)
+                        NewSword:applyForce(vec(0,0,30)*NewSword:mass())
+                        NewSword:soundPlay(6490,2,"ui/item_knife_large_pickup.wav")
+                        
+                        soundPitch(6490+TempSwords:count(),randint(70,100))
+                        transmuteSword(NewSword)
+                        selectionMode(0)  
+                    }
+                    elseif(PortalInversion) {
+                        hint("transmuting ground", 5)
+        
+                        local R = Owner:eyeTrace()
+                        local STAng = -heading(vec(0,0,0),ang(0, 0, 0),R:hitNormal())+ang(90,0,0)
+                        #createSwordTrap(R:position(),STAng)
+                        selectionMode(0)                
+                    }
+                    else {
+                        hint("transmuting ground",5)
+        
+                        local Invert = randint(0,1) ? -1 : 1
+                        createStaticSword(Owner:pos() + vec(0,0,40) + Owner:eye()*60 + Owner:eyeAngles():right()*random(15,100)*Invert + Owner:up()*random(-30,30))
+                        selectionMode(0)
+                    }
+                }
+            break,
+            
+            case "r",
+                if (SelectionMode) {
+                    AimEnt = Owner:aimEntity()  
+                    if (AimEnt:model() == "models/hunter/blocks/cube025x025x025.mdl") {
+                        hint("transmuting prop", 5)
+                        transmuteGun(AimEnt)
+                        selectionMode(0)            
+                    }
+                    else {
+                        hint("transmuting ground",5)
+                        local Invert = randint(0,1) ? -1 : 1
+                        local Randvec = randvec(vec(-30, 30 * Invert, 20),vec(-30, -90 * Invert, 60))
+                        local NewGun = propSpawn("models/hunter/blocks/cube025x025x025.mdl",Owner:toWorld(Randvec),ang(0,0,0),0)
+                        NewGun:propGravity(0)
+                        NewGun:applyForce(vec(0,0,10)*NewGun:mass())
+                        transmuteGun(NewGun)
+                        selectionMode(0)         
+                    }
+                }
+            break
+            
+            case "t",
+                if (SelectionMode) {
+                    hint("transmuting ground", 5)
+                    local EndPPos = vec(0, 0, 0)
+                    
+                    if (PortalInversion) {
+                        local R = Owner:eyeTrace()
+                        local Norm = R:hitNormal()
+                        
+                        EndPPos = Owner:aimPos() + Norm * 40
+                    }
+                    else {
+                        EndPPos = Owner:aimPos()+vec(0, 0, 40)
+                    }
+                    
+                    portalCreate(Owner:toWorld(vec(80 - 160 * PortalInversion, 0, 40)), EndPPos, PortalInversion)
+                    
+                    PortalInversion = 0
+                    selectionMode(0)
+                }
+            break,
+            
+            case "f",
+                if (SelectionMode) {
+                    if (!PortalInversion) {  
+                        hint("transmuting ground",5)
+                        local R = Owner:eyeTrace()
+                        local JPadAng = -heading(vec(0,0,0),ang(0,0,0),R:hitNormal())+ang(90,0,0)
+                        jumppadCreate(R:position(),JPadAng,JPadPower)
+                        selectionMode(0)
+                    }
+                    else {
+                        hint("transmuting ground",5)
+                        local LPadAng = Owner:angles():yaw()
+                        launchpadCreate(Owner:aimPos(),LPadAng,JPadPower)
+                        selectionMode(0)
+                    }                
+                }
+            break,
+            
+            case "[", # Art FMToggle Key
+                ARTFiremode++
+                if (ARTFiremode > 1) {
+                    ARTFiremode = 0
+                    hint("Firemode: Artillery",5)
+                }
+                else {
+                    hint("Firemode: Direct",5)    
+                }
+            break,
+             
+            case "]", # Gun Toggle Key
+                GunType++
+                if (GunType >= 4) {
+                    GunType = 0
+                }
+                
+                hint("Gun Type | " + GunType, 5)
+            break,
+            
+            case "mouse_right",
+                if (!PortalInversion) {
+                    PortalInversion = 1
+                }
+                else {
+                    PortalInversion = 0
+                }
+
+                hint("Portal Inversion | " + PortalInversion, 5)
+            break
+        }
+    }
+}
+
+event tick() {
+    CPUUsage = entity():cpuUsage()*1000000
+    Ops = entity():ops()
+    HRS = holoRemainingSpawns()
+
+    Time = systime()
+    Seconds = int(systime())
+    
+    if (changed(Seconds)) {    
+        local SwordArray = array()
+        for (I = 1, TempSwords:count()) {
+            if (Seconds >= TempSwords[I, array][2, number]) {
+                TempSwords[I, array][1, entity]:propDelete()
+                TempSwords:remove(I)
+            }
+    
+            SwordArray:pushEntity(TempSwords[I, array][1, entity])
+        }
+        
+        local AddedEntsArray = array()
+        
+        if (PortalAllPlayers) {
+            TrustsMe = players()
+        }
+        else{
+            TrustsMe = array()
+        
+            local Players = players()
+            for (I = 1, Players:count()) {
+                if (Players[I,entity]:trusts(Owner)) {
+                    TrustsMe:pushEntity(Players[I, entity])
+                }
+            }
+        }
+        
+        for (I = 1, AddedEnts:count()) {
+            if (!AddedEnts[I, array][1, entity] || Time > AddedEnts[I, array][2, number]) {
+                AddedEnts:remove(I)
+                print("removing added ent")
+            }
+            else {
+                AddedEntsArray:pushEntity(AddedEnts[I, array][1, entity])
+            }
+        }
+    
+        PortalJumpadEnts = TrustsMe:add(AddedEntsArray)
+    }
+    
+    HitPos = Owner:aimPos()
+    Fire = Owner:keyPressed("B")
+    
+    MS = round(Time,1)
+    if (Ops < softQuota()) {    
+        railgunFunctionality(Fire, HitPos, 1)
+        swordFunctionality(Fire, HitPos)
+        artilleryFunctionality(Fire, HitPos, ARTFiremode)
+    
+        if (changed(MS)) {
+            jumppadFunctionality(PortalJumpadEnts)
+            launchpadFunctionality(PortalJumpadEnts)
+            portalFunctionality(PortalJumpadEnts)
+        }
+    }
+    else {
+        clean()
+    }
+
+    if (changed(Telluric) & !Telluric) {
+        for (I = 1, TelluricGuns:count()) {
+            TelluricGuns[I, entity]:propDelete()
+        }
+
+        TelluricGuns = array()
+    }
+    
+    if(Telluric){
+        local Pos = array()
+        Pos[1,vector] = Owner:toWorld(vec(0, 30, 60))
+        Pos[2,vector] = Owner:toWorld(vec(0, -30, 60))
+        Pos[3,vector] = Owner:toWorld(vec(0, 60, 30))
+        Pos[4,vector] = Owner:toWorld(vec(0, -60, 30))
+        
+        if(changed(GunType)){
+            for(I=1,TelluricGuns:count()){
+                TelluricGuns[I,entity]:propDelete()
+            }
+        }
+        for (I = 1, 4) {
+            if (!TelluricGuns[I, entity]) {
+                propSpawnUndo(0)
+                local NewGun = propSpawn("models/hunter/blocks/cube025x025x025.mdl", Pos[I, vector], ang(0),0)
+                propSpawnUndo(1)
+                NewGun:propGravity(0)
+                NewGun:setMass(999999)
+                NewGun:propNotSolid(1)
+
+                transmuteGun(NewGun)
+                TelluricGuns[I, entity] = NewGun
+            }
+        }
+    
+        for(I = 1, TelluricGuns:count()) {
+            TelluricGuns[I, entity]:setPos(Pos[I, vector])
+        }
+    }
+}
+
+#1/24/2021
+#originally made by Katsu
+#rewrote and remade by anane

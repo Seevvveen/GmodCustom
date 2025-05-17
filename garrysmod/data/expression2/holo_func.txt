@@ -1,0 +1,13 @@
+#if (first()) {
+    function void hlx(Index:number, Parent:entity, Model:string, Material:string, Scale:vector, Color:vector4, Pos:vector, Ang:angle, Shading:number) {
+        holoCreate(Index)
+        holoParent(Index, Parent)
+        holoModel(Index, Model)
+        holoMaterial(Index, Material)
+        holoScale(Index, Scale)
+        holoColor(Index, Color)
+        holoPos(Index, Pos)
+        holoAng(Index, Ang)
+        holoDisableShading(Index, Shading)
+    }   
+#}

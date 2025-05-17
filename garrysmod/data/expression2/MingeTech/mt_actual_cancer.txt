@@ -1,0 +1,32 @@
+@name actual cancer
+@persist Holos Count
+
+
+if(first()){
+    Count = 128
+    runOnTick(1)
+}
+
+if(Holos<Count){
+    Holos++
+    holoCreate(Holos)
+    holoPos(Holos,entity():pos())
+    holoModel(Holos,"models/dog.mdl")
+    holoParent(Holos,entity())
+    holoAng(Holos,ang(Holos*0.1))
+    holoEntity(Holos):setSubMaterial(1,"models/alyx/emptool_glow")
+    holoMaterial(Holos,"hlmv/debugmrmwireframe")
+    holoColor(Holos,hsv2rgb(360*Holos/Count,1,1))
+    holoAlpha(Holos,min(2*(1-Holos/Count),1)*255)
+    holoScale(Holos,vec(100))
+}
+
+for(I=0,5){
+    holoBoneScale(Holos,I,vec(10)*(Holos/Count))    
+}
+
+for(I=6,9){
+    holoAng(Holos,ang(curtime()*500,curtime()/500,curtime()*500))
+    holoBoneScale(Holos,I,vec(0))    
+}
+

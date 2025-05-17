@@ -1,0 +1,51 @@
+@name 
+@inputs 
+@outputs 
+@persist Chip:entity
+@trigger 
+@strict
+
+if(first()){
+    Chip = entity()
+    
+    Angles = toWorldAng(vec(), toWorldAng(vec(), ang(0, 0, 0), vec(), ang(0, 0, 0)), vec(), ang(0, owner():eyeAngles()[2] + 0, 0))
+    entity():setAng(Angles)
+    #Chip:setPos(owner():shootPos() + owner():eye():setZ(0):normalized() * 80 + vec(0, 0, 8))
+    
+    
+    #minecraft block is 3 units in scalin
+    #Entity=holoCreate(number index,vector position,vector scale,angle ang,vector4 color,string model)
+    #PORTAL SHIT
+    holoCreate(1,Chip:pos()+vec(0,0,15),vec(3,12,3),ang(),vec4(0,0,0,255),"cube")
+        holoParent(1,Chip)
+    holoCreate(2,Chip:pos()+vec(0,54,105),vec(3,3,12),ang(),vec4(0,0,0,255),"cube")
+        holoParent(2,Chip)
+    holoCreate(3,Chip:pos()+vec(0,-54,105),vec(3,3,12),ang(),vec4(0,0,0,255),"cube")
+        holoParent(3,Chip)
+    holoCreate(4,Chip:pos()+vec(0,0,159),vec(3,6,3),ang(),vec4(0,0,0,255),"cube")
+        holoParent(4,Chip)
+    holoCreate(5,Chip:pos()+vec(-5,0,75),vec(12,9,1),ang(-90,0,0),vec4(255,0,255,100),"plane")
+        holoParent(5,Chip)
+    holoCreate(6,Chip:pos()+vec(5,0,75),vec(12,9,1),ang(90,0,0),vec4(255,0,255,100),"plane")
+        holoParent(6,Chip)
+    
+    
+    #Render Shit
+    holoCreate(7,Chip:pos()+vec(30,0,305),vec(-50,-50,-50),ang(),vec4(255,50,50,0),"cube")
+        holoParent(7,Chip)
+        holoDisableShading(7,0)
+    holoCreate(8,Chip:pos()+vec(-30,0,305),vec(-50,-50,-50),ang(),vec4(255,50,50,0),"cube")
+        holoParent(8,Chip)
+        holoDisableShading(8,0)
+    
+    stencilCreate(1, _STENCIL_WHITELIST)
+        stencilAddReferenceEntity(1, holoEntity(5))
+        stencilAddEntity(1, holoEntity(7))
+        
+        
+    stencilCreate(2, _STENCIL_WHITELIST)
+        stencilAddReferenceEntity(2, holoEntity(6))
+        stencilAddEntity(2, holoEntity(8))
+    
+    
+}

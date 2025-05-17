@@ -1,0 +1,29 @@
+@name 
+@inputs 
+@outputs 
+@persist LastUpdate Value:entity
+@trigger 
+@strict
+
+LastUpdate = 0
+event tick() {
+    local Time = systime()
+
+    if(Time - LastUpdate >= 0.3){
+        LastUpdate = Time
+        
+        findIncludeClass("pac_projectile")
+        findInSphere(entity():pos(),200)
+        DeleteMe  = findToArray()
+        #print(DeleteMe)
+
+        foreach (Iter, Value:entity = DeleteMe){
+            Value:admPropBreak()
+            Value:admPropDelete()
+            
+        }
+
+        
+        
+    }
+}

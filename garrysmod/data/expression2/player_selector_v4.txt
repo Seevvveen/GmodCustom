@@ -1,0 +1,166 @@
+@name Player Selector V4
+@inputs 
+@outputs Player:entity [Switch1, Button1, Switch2, Button2]:number
+@persist EGP:wirelink Index Cursor
+@trigger 
+@strict
+
+function string timeFormat(Time:number) { let Seconds = floor(Time), let S = Seconds % 60, Seconds = floor(Seconds / 60), let M = Seconds % 60, Seconds = floor(Seconds / 60), let H = Seconds % 24, let D = floor(Seconds / 24), let W = floor(D / 7), let Str = (W > 0 ? W + "w " : "") + (D > 0 ? D + "d " : ""), return format("%s%02ih %02im %02is", Str, H, M, S)}
+Player = noentity()
+
+##
+## Automatically Spawns the EGP Screen
+##
+#ifdef spawnEgp(string,vector,angle,number)
+    propSpawnUndo(0)
+    local EntEGP = spawnEgp("models/hunter/plates/plate1x1.mdl", entity():pos() + vec(0,0,50), entity():angles(), 1)
+    Angles = toWorldAng(vec(), toWorldAng(vec(), ang(90, 180, 0), vec(), ang(0, 0, 0)), vec(), ang(0, owner():eyeAngles()[2] + 0, 0)) 
+    EntEGP:setAng(Angles)
+    EGP = EntEGP:wirelink()
+#else
+    print("Sever Does not have spawnEgp() from Antcore please connect the screen with wire")
+#endif
+
+function staticObjects(){
+    EGP:egpBox(1,vec2(256,12.5),vec2(512,25))
+    EGP:egpColor(1,vec(100,100,255))
+    
+    EGP:egpText(2,"Player Selector V3",vec2(190,3))
+    EGP:egpColor(2,vec(255))
+    
+    EGP:egpText(3,"Select Player with E",vec2(1,15))
+    EGP:egpSize(3,10)
+    
+    EGP:egpBox(4,vec2(512,269),vec2(512,490))
+    EGP:egpColor(4,vec(100))
+    
+    EGP:egpLine(5,vec2(256,24),vec2(256,512))
+    EGP:egpLine(6,vec2(0,24),vec2(512,24))
+    
+    EGP:egpBox(7,vec2(0),vec2(260, 30))
+    EGP:egpAlpha(7,0)
+    
+    EGP:egpBoxOutline(9,vec2(417,35), vec2(185, 15))
+    EGP:egpColor(9,vec(150,150,150))
+    
+    EGP:egpBoxOutline(12,vec2(417,52), vec2(185, 15))
+    EGP:egpColor(12,vec(150,150,150))
+}
+
+function updatePlayers(){
+    for (TempVar = egpMaxObjects()-31,egpMaxObjects()+1,1) {
+        EGP:egpRemove(TempVar)
+    }
+
+    # initial ID for EGP objects
+    let ID = egpMaxObjects() - 31
+    let Y = 43    #- The Offset from the top of the screen
+
+    foreach (_:number, Ply:entity = players()) {
+        let RoleColor = teamColor(Ply:team())
+        
+        #Background block
+        ID++
+        EGP:egpBox(ID, vec2(126,Y), vec2(260, 30))
+        EGP:egpColor(ID,RoleColor/3)
+        EGP:egpAlign(ID,0,1)
+        #EGP:egpColor(ID, 50, 50, 50, 255)
+                 
+        #Text Object
+        ID++
+        EGP:egpText(ID, Ply:name(), vec2(5, Y))
+        EGP:egpSize(ID, 16)
+        EGP:egpAlign(ID, 0, 1)
+
+        Y += 32
+    }    
+}
+
+function updateConstant(SelectedPlayer:entity){
+    if(!SelectedPlayer:isValid()){SelectedPlayer = owner()}
+    
+    #healthbar Var
+    local HealthPercent = SelectedPlayer:health()/100
+    local Adjust = (HealthPercent*185)/2
+        
+    EGP:egpBox(8,vec2(325+Adjust,35), vec2(185*HealthPercent, 15))
+    EGP:egpColor(8,vec(0,255,0))
+    EGP:egpAlign(8,0,1)
+
+    EGP:egpText(10,"HP: "+ SelectedPlayer:health():toString(),vec2(260,34))
+    EGP:egpAlign(10,0,1)
+    EGP:egpColor(10,vec(0,255,0))
+        
+    #Armor Var
+    local ArmorPercent = SelectedPlayer:armor()/100
+    local Adjust2 = (ArmorPercent*185)/2
+        
+    EGP:egpBox(11,vec2(325+Adjust2,52), vec2(185*ArmorPercent, 15))
+    EGP:egpColor(11,vec(0,0,255))
+        
+    EGP:egpText(13,"AR: "+SelectedPlayer:armor():toString(),vec2(260,51))
+    EGP:egpAlign(13,0,1)
+    EGP:egpColor(13,vec(0,0,255))
+        
+    EGP:egpText(14,"Role: "+teamName(SelectedPlayer:team()),vec2(260,68))
+    EGP:egpAlign(14,0,1)
+    EGP:egpColor(14,teamColor(SelectedPlayer:team()))
+        
+    EGP:egpText(15,"Time Connected: "+timeFormat(SelectedPlayer:timeConnected()),vec2(260,85))
+    EGP:egpAlign(15,0,1)
+    EGP:egpColor(15,vec(192,192,192))
+        
+    #Kills
+    EGP:egpText(16,"Kills: "+SelectedPlayer:frags():toString(),vec2(260,103))
+    EGP:egpAlign(16,0,1)
+    EGP:egpColor(16,vec(255,0,255))
+        
+    #Deaths
+    EGP:egpText(17,"Deaths: "+SelectedPlayer:deaths():toString(),vec2(510,103))
+    EGP:egpAlign(17,2,1)
+    EGP:egpColor(17,vec(255,255,0))
+
+}
+
+function onClick(Cursor:vector2){
+    PlayerIndex = 0
+    for (TempVar = egpMaxObjects()-31,egpMaxObjects(),1) {
+        PlayerIndex = TempVar-egpMaxObjects()+31
+        
+        if(EGP:egpObjectContainsPoint(TempVar, Cursor)){
+            EGP:egpAlpha(7,255)
+            EGP:egpOrderBelow(TempVar,7)
+            EGP:egpPos(7,EGP:egpPos(TempVar))
+            EGP:egpColor(7,EGP:egpColor(TempVar)*2.5)
+            Player = players()[TempVar-egpMaxObjects()+31,entity]
+            if(PlayerIndex>2){
+                PlayerIndex = floor(1+PlayerIndex/2)
+            }
+            Player = players()[PlayerIndex,entity]
+        }
+    }
+}  
+
+event tick(){
+    User = EGP["User",entity]
+    if (User:isValid()){
+        onClick(EGP:egpCursor(User))
+    }
+    updateConstant(Player)
+}
+
+#This is very dumb and inconvient but idk
+event playerConnected(Player:entity) {
+    reset()
+}
+event playerDisconnected(Player:entity) {
+    reset()
+}
+
+if(first()|dupefinished()){
+    staticObjects()
+    updatePlayers()
+}
+
+
+

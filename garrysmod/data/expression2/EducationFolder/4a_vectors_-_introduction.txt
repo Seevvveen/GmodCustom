@@ -1,0 +1,87 @@
+@name 4A Vectors - Introduction
+@inputs 
+@outputs A:vector2 B:vector C:vector4 W X Y Z 
+@persist 
+@trigger 
+
+X = 0              #
+Y = 255            ##Defines the XYZ Varibles
+Z = 0              #
+
+B = vec(X,Y,Z)     #Defines B using the vec(0,255,0)
+
+
+#You can define the number in vectors mutiple ways with examples such as;
+#B = vec(1+1,2*2,3/3)   #Mathmatical Operations
+#B = vec(X,Y,Z)         #Varibles
+#B = vec(X+1,Y*2,Z/3)   #Combinations
+
+
+##########
+#Two Dimensional Vector (X,Y)
+#Defined as A:vector2
+
+A = vec2(X,Y)     #Defines A as a vec2
+
+#Because both A and B are vector datatypes you can combine them
+#B = vec(vec2(X,Y),Z)
+
+#OR because A is defined as a vec2 we can also do;
+
+#B = vec(A,B)
+
+
+###########
+#Four Dimensional Vector (W,X,Y,Z) 
+
+C = vec4(W,X,Y,Z)   #defines C as a Vector4
+
+#combining vectors still works meaning we can rewrite line 35 as;
+#C = vec4(A,W,Z)    
+    #NOTICE: We had to put varible A infront of W and Z, since we are defining our vector4 with another vector..
+    #..We need to put that varibles first then follow the W X Y Z layout
+    
+#other coombinations examples are;
+#C = vec4(A,A)  #2 vector2's 
+#C = vec4(B,W)  #a vector plus a W
+
+
+###########
+#Taking Values from vectors
+
+B = vec(100,50,25)
+
+X = B:x()   #
+Y = B:y()   ##Takes the Values from the vector assigned to B 
+Z = B:z()   #
+
+
+###########
+#Dealing with decimals (often found when using vectors)
+
+B = floor(vec(100/3,50/3,25/3))   #"floor" Forces the result to round down
+B = ceil(vec(100/3,50/3,25/3))    #"Ceil" or Celing Forces the result to round up
+B = round(vec(100/3,50/3,25/3))   #"round" Rounds like normal math rounds down anything less than 5 and up if 5 or more
+
+
+#Vectors to Strings
+print(B:toString())   #Takes the varible B which is a vector and converts it to a string then prints it
+
+#Getting Random Numbers
+B = floor(randvec(0,255))   #will call a random number between 0 & 255 then floor these values
+
+#Interval Command
+interval(100)   #Will update the E2 chip every (ammount) of ticks
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,28 @@
+@name WHITELISTING LIB
+@persist List:array Whitelist:table Blacklist:table
+
+
+# Heavy WIP
+
+if(first()){
+    List = players()
+    Whitelist = table() 
+    Blacklist = table()
+    
+    function entity:whitelist(){
+        Whitelist[This:steamID(),string] = This:steamID()
+    }
+    
+    function entity:removeWhitelist(){
+        Whitelist:remove(This:steamID())
+    }
+    
+    function entity:blacklist(){
+        Blacklist[This:steamID(),string] = This:steamID()
+    }
+    
+    function entity:removeBlacklist(){
+        Blacklist:remove(This:steamID())
+    }
+    
+}

@@ -1,0 +1,18 @@
+@name 5a Entities - Introduction
+@inputs 
+@outputs 
+@persist Ent:entity
+@trigger 
+
+owner()             #the Chips owner
+entity()            #The Actual E2 Chip
+entity():owner()    #Wanting the Owner of the E2 Chip
+
+Ent = owner()       #Assigns the Owner to the Varible Ent
+
+#Basic Print using entity properties
+print(Ent:name()+"'s Stats | Kills: "+Ent:frags()+" Deaths: "+Ent:deaths()+" KDR: "+(Ent:frags()/Ent:deaths()))     #Prints the Entitys Name + kills + Deaths + KDR in chat 
+    #Exmaples of other things you can grab are
+    #Ent:armor()
+    #Ent:angles()
+    #Ent:aimPos()

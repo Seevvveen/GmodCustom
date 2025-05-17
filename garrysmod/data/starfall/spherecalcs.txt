@@ -1,0 +1,42 @@
+--@name
+--@author
+--@shared
+
+if SERVER then
+    BASE = chip()
+    BASEPOS = BASE:getPos()
+    
+    local function SphereCalc(num_points,radius)
+        local GR = (math.sqrt(5) + 1) / 2
+        local GA = (2 - GR) * (2 * math.pi)
+        local vectors = {}
+    
+        for i = 1, num_points do
+            local lat = math.asin(-1 + 2 * i / (num_points + 1))
+            local lon = GA * i
+    
+            local x = math.cos(lon) * math.cos(lat)
+            local y = math.sin(lon) * math.cos(lat)
+            local z = math.sin(lat)
+    
+            table.insert(vectors, Vector(x, y, z)*radius)
+        end
+    
+        return vectors
+    end
+    local SpherePoints = SphereCalc(256,750)
+    
+    for _, V in ipairs(SpherePoints) do
+        if V:isInWorld() then
+            CurHolo = hologram.create(chip():getPos()+V, BASE:getAngles(), "models/hunter/blocks/cube6x6x025.mdl")
+        end
+        AngleVec = CurHolo:getPos() - BASEPOS
+        CurHolo:setParent(chip())
+        CurHolo:setAngles(AngleVec:getAngle()+Angle(90,0,0))
+        CurHolo:setMaterial("brick/brick_model")
+
+        
+        --print(BASEPOS:getAngleEx(CurHolo:getPos()))
+        
+    end
+end

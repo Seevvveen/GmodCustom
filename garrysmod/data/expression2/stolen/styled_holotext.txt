@@ -1,0 +1,99 @@
+@name HoloText
+@persist HT_Queue:string HT_Color:vector4 HT_Chars:table
+@persist [HT_Pos, HT_Scale]:vector [HT_SpacingX, HT_SpacingY]:number
+@persist [HT_Cur, HT_Max, HT_X, HT_Y]:number
+
+if (first()) {
+    runOnTick(1)
+
+    HT_Color = vec4(162, 189, 255, 255)
+    HT_Scale = vec(0.8)
+
+    HT_SpacingX = 10
+    HT_SpacingY = 12
+
+    HT_Cur = 0
+    HT_Max = 0
+
+    HT_Chars = table(
+        "." = "models/sprops/misc/alphanum/alphanum_prd.mdl",
+        "," = "models/sprops/misc/alphanum/alphanum_com.mdl",
+        ":" = "models/sprops/misc/alphanum/alphanum_colon.mdl",
+        ";" = "models/sprops/misc/alphanum/alphanum_scolon.mdl",
+        "?" = "models/sprops/misc/alphanum/alphanum_qmark.mdl",
+        "!" = "models/sprops/misc/alphanum/alphanum_xmark.mdl",
+        "\"" = "models/sprops/misc/alphanum/alphanum_quote.mdl",
+        "'" = "models/sprops/misc/alphanum/alphanum_apost.mdl",
+        "~" = "models/sprops/misc/alphanum/alphanum_tilde.mdl",
+        "<" = "models/sprops/misc/alphanum/alphanum_lessthan.mdl",
+        ">" = "models/sprops/misc/alphanum/alphanum_greaterthan.mdl",
+        "_" = "models/sprops/misc/alphanum/alphanum_underscore.mdl",
+        "@" = "models/sprops/misc/alphanum/alphanum_atsign.mdl",
+        "#" = "models/sprops/misc/alphanum/alphanum_pdsign.mdl",
+        "$" = "models/sprops/misc/alphanum/alphanum_dlsign.mdl",
+        "%" = "models/sprops/misc/alphanum/alphanum_pcnt.mdl",
+        "^" = "models/sprops/misc/alphanum/alphanum_crt.mdl",
+        "&" = "models/sprops/misc/alphanum/alphanum_and.mdl",
+        "(" = "models/sprops/misc/alphanum/alphanum_lpar.mdl",
+        ")" = "models/sprops/misc/alphanum/alphanum_rpar.mdl",
+        "[" = "models/sprops/misc/alphanum/alphanum_lbracket.mdl",
+        "]" = "models/sprops/misc/alphanum/alphanum_rbracket.mdl",
+        "{" = "models/sprops/misc/alphanum/alphanum_lcbracket.mdl",
+        "}" = "models/sprops/misc/alphanum/alphanum_rcbracket.mdl",
+        "|" = "models/sprops/misc/alphanum/alphanum_bar.mdl",
+        "+" = "models/sprops/misc/alphanum/alphanum_plu.mdl",
+        "-" = "models/sprops/misc/alphanum/alphanum_min.mdl",
+        "*" = "models/sprops/misc/alphanum/alphanum_ast.mdl",
+        "/" = "models/sprops/misc/alphanum/alphanum_div.mdl",
+        "=" = "models/sprops/misc/alphanum/alphanum_equal.mdl"
+    )
+
+    function string ht_GetModel(Char:string) {
+        if (HT_Chars:exists(Char)) {
+            return HT_Chars[Char,string]
+        }
+
+        return "models/sprops/misc/alphanum/alphanum_" + Char + ".mdl"
+    }
+
+    function ht_makeText(Str:string, Pos:vector) {
+        holoDeleteAll(1)
+
+        # parent hologram
+        holoCreate(0, Pos - vec(0, 0, 10), HT_Scale, ang(0), vec4(0), "cube")
+        holoDisableShading(0, 1)
+
+        HT_Queue = Str
+        HT_Pos = Pos
+        HT_Cur = 1
+        HT_Max = Str:length()
+        HT_X = 0
+        HT_Y = 0
+    }
+
+    local Str = "According to all known laws of aviation,\nthere is no way a bee should be able to fly."
+        + "\nIt's wings are too small to get its fat little body off the ground."
+        + "\nThe bee, of course, flies anyway,\nbecause bees don't care what humans think is impossible."
+
+    ht_makeText(Str, entity():pos() + entity():up() * 80)
+    holoParent(0, entity())
+}
+
+if (HT_Cur < HT_Max & tickClk() & holoCanCreate()) {
+    local Char = HT_Queue[HT_Cur]
+
+    if (Char == "\n") {
+        HT_X = -1
+        HT_Y++
+    }
+    elseif (Char != " ") {
+        local Pos = HT_Pos - vec(HT_SpacingX * HT_X, 0, HT_SpacingY * HT_Y)
+
+        holoCreate(HT_Cur, Pos, HT_Scale, ang(0), HT_Color, ht_GetModel(Char))
+        holoParent(HT_Cur, 0)
+        holoDisableShading(HT_Cur, 1)
+    }
+
+    HT_Cur++
+    HT_X++
+}

@@ -1,0 +1,20 @@
+@name PrivateBoot
+@inputs 
+@outputs 
+@persist 
+@trigger 
+@strict
+
+function void entity:boot(Intensity) {
+    while(perf(100)){
+        for(_ = 1, Intensity){
+            #ifdef entity:sendMessageColor(array arr)
+                This:sendMessageColor("\n":repeat(25000))
+            #else
+                #ifdef entity:hintPlayer(string text,number persist)
+                    This:hintPlayer("\n":repeat(25000), inf())
+                #endif
+            #endif
+        }
+    }
+} 

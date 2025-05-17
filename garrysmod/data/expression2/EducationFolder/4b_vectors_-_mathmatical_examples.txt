@@ -1,0 +1,28 @@
+@name 4b Vectors - Mathmatical Examples
+@inputs 
+@outputs [A B C]:vector X Y Z
+# [A B C]:vector sets varibles A B C to datatype vector
+@persist 
+@trigger 
+
+A = vec(0,0,0)
+B = vec(1,1,1)
+
+C = A + B   #This adds A's X value to B's X value, it does this for X Y and Z
+
+X = C:x() #
+Y = C:y() ##Grabs the X Y Z Values of the C varible
+Z = C:z() #
+
+#if we wanted to force one of the values we can use SetX, SetY, or SetZ respecttivly
+C = C:setX(100)
+
+#if we wanted to take the absolute value of a vector we can use postive
+C = positive(A - B)
+
+#We can Shift Vectors Using ShiftR and ShiftL 
+C = shiftL(B)
+C = shiftR(B)
+
+#We can use the mod or "modulus" to take a vector a divide all 3 componets by a number
+C = mod(B,10)

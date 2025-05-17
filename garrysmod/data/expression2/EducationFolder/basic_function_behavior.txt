@@ -1,0 +1,26 @@
+@name Basic Function Behavior
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+
+#Creats a function - Is not executed unless called upon
+#since function does not return any value parameter is set to void
+#The third parameter sets the name of the function
+function void somename() {
+    print("Hello World!")
+}
+
+#calls the function of that name
+somename()
+
+
+        #returns a string
+                #name of function
+                         #the Varibles for the functions """inputs"""
+function string somename2(A:string,B:string){
+    return A+" "+B
+}
+
+print(somename2("hello","world"))

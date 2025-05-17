@@ -1,0 +1,193 @@
+@persist Portals:table HoloData:array
+#include "libraries/multi-holo"
+
+#[
+    main code stuff
+]#
+
+if (first()) {
+    Portals = table()
+    HoloData = array()
+    
+    function entity createProp(Pos:vector) {
+        local Prop = propSpawn("models/hunter/tubes/circle2x2.mdl", Pos, ang(0), 1)
+        Prop:setAlpha(0)
+        Prop:propNotSolid(1)
+
+        return Prop
+    }
+
+    function void portalCreate(StartPos:vector, EndPos:vector, Invert:number) {
+        local Port1 = createProp(StartPos)
+        local Port2 = createProp(EndPos)
+
+        local TY = owner():eyeAngles():yaw() + 180
+
+        if (Invert) {
+            Port1:setAng(ang(90,TY,0))
+            Port2:setAng(ang(90,(TY+180),0))
+        }
+        else{
+            Port1:setAng(ang(90,(TY+180),0))
+            Port2:setAng(ang(90,TY,0))
+        }
+
+        # tables can only use strings as keys, so...
+        local PortalID = toString(Portals:count() + 1)
+
+        Portals[PortalID,table] = table(
+            "ready" = 0,        # 0 if awaiting transmutation, 1 if ready
+            "port1" = Port1,    # Port entity 1
+            "port2" = Port2,    # Port entity 2
+            "timer" = 0         # Teleport cooldown timer
+        )
+    }
+
+    function void portalDelete(PortalID:string) {
+        local Portal = Portals[PortalID,table]
+
+        Portal["port1",entity]:propDelete()
+        Portal["port2",entity]:propDelete()
+
+        Portal:remove(PortalID)
+    }
+
+    function array portCreateHolos(Port:entity) {
+        local HoloArray = multiHolo(Port, HoloData)
+
+        HC++
+        
+        # store the "effect" holo at index 0
+        HoloArray[0,number] = HC
+
+        holoCreate(HC)
+        holoAlpha(HC, 0)
+        holoParent(HC, Port)
+        holoPos(HC, Port:toWorld(vec(randint(-36,-40),0,0)))
+
+        
+
+        return HoloArray
+    }
+
+    function void portalTransmutate(Portal:table) {
+        local Port1 = Portal["port1",entity]
+        local Port2 = Portal["port2",entity]
+
+        # transmutate port 1
+        local HoloArray1 = portCreateHolos(Port1)
+
+        # transmutate port 2
+        local HoloArray2 = portCreateHolos(Port2)
+
+        # we finished transmutating this portal!
+        Portal["ready",number] = 1
+
+        # keep track of the holograms
+        Portal["holos1",array] = HoloArray1
+        Portal["holos2",array] = HoloArray2
+    }
+
+    function void portalAnimate(Portal:table, T:number) {
+        local Offset = vec(
+            sin(T * 700) * 40,
+            cos(T * 700) * 40,
+            0
+        )
+
+        local Ang = ang(180, T * 70, 0)
+
+        # animate port 1
+        local Port1 = Portal["port1",entity]
+        local HoloArray1 = Portal["holos1",array]
+
+        local Port1Effect = HoloArray1[0,number]
+        local Port1Holo = holoIndex(HoloArray1[1,entity])
+
+        holoParent(Port1Effect, Port1)
+        holoPos(Port1Effect, Port1:toWorld(Offset))
+        holoAng(Port1Holo, Port1:toWorld(Ang))
+
+        # animate port 2
+        local Port2 = Portal["port2",entity]
+        local HoloArray2 = Portal["holos2",array]
+
+        local Port2Effect = HoloArray2[0,number]
+        local Port2Holo = holoIndex(HoloArray2[1,entity])
+
+        holoParent(Port2Effect, Port2)
+        holoPos(Port2Effect, Port2:toWorld(Offset))
+        holoAng(Port2Holo, Port2:toWorld(Ang))
+    }
+
+    function void portalTeleport(Portal:table, Ply:entity, Dist:number, T:number) {
+        # dont do anything if this portal is in cooldown
+        if (T < Portal["timer",number]) {
+            return
+        }
+
+        local PortPos1 = Portal["port1",entity]:pos()
+        local PortPos2 = Portal["port2",entity]:pos()
+
+        local Pos = Ply:pos()
+
+        # cause were gonna use distance2
+        Dist = Dist ^ 2
+
+        if (Pos:distance2(PortPos1) < Dist) {
+            Ply:teleport(PortPos2 - Portal["port2",entity]:up() * 80)
+
+            Portal["port2",entity]:soundPlay(1, 3, "buttons/og_button_down_01.wav")
+            Portal["timer",number] = T + 0.3
+        }
+        elseif (Pos:distance2(PortPos2) < Dist) {
+            Ply:teleport(PortPos1 - Portal["port1",entity]:up() * 80)
+
+            Portal["port1",entity]:soundPlay(2, 3,"buttons/og_button_down_01.wav")
+            Portal["timer",number] = T + 0.3
+        }
+    }
+
+    function void portalFunctionality(Targets:array) {
+        local T = realtime()
+        
+        foreach (K:string, Portal:table = Portals) {
+            local Port1 = Portal["port1",entity]
+            local Port2 = Portal["port2",entity]
+
+            if (Port1:isValid() && Port2:isValid()) {
+                foreach (_:number, V:entity = Targets) {
+                    portalTeleport(Portal, V, 65, T)
+                }
+
+                if (Portal["ready",number] == 0) {
+                    if (holoRemainingSpawns() > 1) {
+                        portalTransmutate(Portal)
+                    }
+                }
+                else {
+                    portalAnimate(Portal, T)
+                }
+
+            }
+            else {
+                  portalDelete(K)
+            }
+        }
+    }
+
+    HoloData = array(
+        "models/holograms/hq_torus_thin.mdl",
+        "models/props/de_tides/clouds",
+        vec(7),
+        vec(0),
+        ang(0),
+        vec4(255,0,0,255),
+        1
+    )
+
+    HoloData[0,number] = 1
+}
+
+#models/screenspace
+#models/holograms/cplane.mdl

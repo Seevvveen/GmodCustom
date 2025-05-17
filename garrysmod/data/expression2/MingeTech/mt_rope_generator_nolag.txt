@@ -1,0 +1,20 @@
+@name ROPE GENERATOR
+@persist A
+if(first()) {
+    beamMaterial("cable/rope")
+    beamSize(100e4)
+    beamGlobal(1)
+    B=1
+}
+event tick() {
+    beamColor(1,hsv2rgb( A % 360,1,1))
+    for(I = 1,1) { 
+        A += 1
+        B += 5000
+        beamPoint(A,entity():toWorld(vec(randint(B*-1,B),randint(B*-1,B),randint(0,B))))
+    }
+}
+
+
+
+

@@ -1,0 +1,27 @@
+@name Lookup Table 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+@strict
+
+# Create table once, using numbers as values
+Table = table("someKey" = 1, "someOtherKey" = 42, "STEAM_0:0:12345"=1)
+
+# Write to table
+Table[Key, number] = Value # Example usecases
+
+
+if(Table:exists(Key)){ # Check if entry exists
+    
+}
+
+if(Table[Key, number]){  # Check if entry is !=0 (and exists)
+    ...
+}
+
+
+ # Read value from table or return a default value if entry doesn't exist
+Value = Table[Key, number] ?: 1337
+
+

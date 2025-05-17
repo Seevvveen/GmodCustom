@@ -1,0 +1,32 @@
+@name 2 Boolean Algebra and Datatypes
+@inputs A B C 
+@outputs D
+@persist 
+@trigger 
+
+
+#Uncomment each line of code to test their functions 
+
+#D = A & B            ## & = AND, A and B need to be pressed for D to equal 1
+
+#D = A | B | C        ## | = OR, A or B or C need to be pressed for D to equal 1
+
+#D = !A               ## ! = NOT, When A equals 1, D equals 0, A should not be pressed for D to equal 1
+
+if(~A) {              ## ~ = CHANGE (sometimes refered to as delta), Whenever the value of A changes D = 10
+    D = 10
+}
+
+###########################
+#datatypes are normally defined as a type of a number
+
+#A = 10               ## Datatype is a number
+
+#A:vector             ## A's datatype is now a vector, NOTE: when defining a datatype it needs to be defined in one of the @inputs or @persist Sections
+#A = vec(0,0,0)       ## This Sets A to the vector "0 0 0" refering to the "X Y Z" cordinates of the world
+
+#A:entity()           #
+#A:angle()            ##More examples of Datatypes
+#A:string             #
+
+#You cant mismatch datatypes, If A is a number and B is a vector, A CANNOT equal B

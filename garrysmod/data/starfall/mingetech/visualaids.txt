@@ -1,0 +1,176 @@
+--ESP
+--@name hahaha
+--@author
+--@client
+
+local Variables = {
+    Name = true,
+    Box2D = true,
+    Weapon = false,
+    HealthAmount = true,
+    HealthBar = true,
+    Skeleton = false   
+}
+
+local color_white = Color(255, 255, 255)
+local color_black = Color(0, 0, 0)
+local color_red = Color(255, 0, 0)
+
+local function GetWeaponName(weapon)
+    if not isValid(weapon) then
+        return ""
+    end
+    
+    local name = weapon:getClass()
+    
+    if weapon.GetPrintName then
+        local printname = weapon:getPrintName()
+        
+        if printname == "<MISSING SWEP PRINT NAME>" then
+            return name
+        end
+        
+        return printname
+    end
+    
+    return name
+end
+
+local function GetHealthColor(pEntity)
+    local flMax = pEntity:getMaxHealth()
+    local flHealth = math.clamp(pEntity:getHealth(), 0, flMax)
+    local flPercent = flHealth * (flHealth / flMax)
+
+    if pEntity._LastHealth ~= flHealth or not pEntity._LastHealthColor then
+        pEntity._LastHealth = flHealth
+        pEntity._LastHealthColor = Color(255 - (flPercent * 2.55), flPercent * 2.55, 0)
+    end
+            
+    return pEntity._LastHealthColor, flPercent / flHealth
+end
+
+local function GetScreenCorners(pEntity)
+    local vMins, vMaxs = pEntity:obbMins(), pEntity:obbMaxs()
+
+    local Coords = {
+        pEntity:localToWorld(vMins):toScreen(),
+        pEntity:localToWorld(Vector(vMins.x, vMaxs.y, vMins.z)):toScreen(),
+        pEntity:localToWorld(Vector(vMaxs.x, vMaxs.y, vMins.z)):toScreen(),
+        pEntity:localToWorld(Vector(vMaxs.x, vMins.y, vMins.z)):toScreen(),
+        pEntity:localToWorld(vMaxs):toScreen(),
+        pEntity:localToWorld(Vector(vMins.x, vMaxs.y, vMaxs.z)):toScreen(),
+        pEntity:localToWorld(Vector(vMins.x, vMins.y, vMaxs.z)):toScreen(),
+        pEntity:localToWorld(Vector(vMaxs.x, vMins.y, vMaxs.z)):toScreen()
+    }
+
+    local flLeft, flRight, flTop, flBottom = Coords[1].x, Coords[1].x, Coords[1].y, Coords[1].y
+    
+    for i = 1, #Coords do
+        local v = Coords[i]
+        
+        if flLeft > v.x then flLeft = v.x end
+        if flTop > v.y then flTop = v.y end
+        if flRight < v.x then flRight = v.x end
+        if flBottom < v.y then flBottom = v.y end
+    end
+
+    return math.round(flLeft), math.round(flRight), math.round(flTop), math.round(flBottom)    
+end
+
+hook.add("drawhud", "", function()
+    for idx, pPlayer in ipairs(find.allPlayers()) do
+        if not isValid(pPlayer) or pPlayer == player() or not pPlayer:isAlive() then continue end
+        
+        local flDistance = pPlayer:getPos():getDistance(owner():getPos())
+        if flDistance < 125 then continue end
+        
+        if Variables.Skeleton then
+            render.setColor(color_red)
+            
+            for i = 0, pPlayer:getBoneCount() - 1 do
+                local parent = pPlayer:getBoneParent(i)
+        
+                         if not parent or parent == -1 then continue end
+        
+                         local pbm = pPlayer:getBoneMatrix(parent)
+                         local bm = pPlayer:getBoneMatrix(i)
+        
+                         if not pbm or not bm then continue end
+        
+                         local ppos = pbm:getTranslation()
+                         local pos = bm:getTranslation()
+        
+                         ppos = ppos:toScreen()
+                         pos = pos:toScreen()
+        
+                render.drawLine(ppos.x, ppos.y, pos.x, pos.y)
+                  end
+        end
+        
+        local flLeft, flRight, flTop, flBottom = GetScreenCorners(pPlayer)
+        local flWidth, flHeight = flRight - flLeft, flBottom - flTop
+        
+        if Variables.Box2D then
+            render.setColor(color_red)
+            render.drawRectOutline(flLeft, flTop, flWidth - 1, flHeight - 1)
+                
+            render.setColor(color_black)
+            render.drawRectOutline(flLeft - 1, flTop - 1, flWidth + 1, flHeight + 1)
+            render.drawRectOutline(flLeft + 1, flTop + 1, flWidth - 3, flHeight - 3)
+        end
+        
+        render.setFont("BudgetLabel")
+        
+        if Variables.Name then
+            local strName = pPlayer:getName()
+            tw, th = render.getTextSize(strName)
+    
+            render.setColor(color_white)
+            render.drawText(flLeft + (flWidth / 2) - (tw / 2), flTop - th - 3, strName)
+        end
+        
+        if Variables.Weapon then
+            local hWeapon = pPlayer:getActiveWeapon() or nil
+            if isValid(hWeapon) then
+                local strWeapon = GetWeaponName(hWeapon)
+                         tw = render.getTextSize(strWeapon)
+                
+                         render.setColor(color_white)
+                         render.drawText(flLeft + (flWidth / 2) - (tw / 2), flBottom, strWeapon)
+            end 
+        end
+        
+        if Variables.HealthAmount or Variables.HealthBar then
+            local flBarWidth, flSpacer = 4, 2
+            local vHealthColor, flHealthPercent = GetHealthColor(pPlayer)
+            local flHealthScreen = math.round((flHeight * flHealthPercent) - 1)
+            local vHealthPos = (flBottom - flHealthScreen) - 1
+            
+            if Variables.HealthBar then
+                render.setColor(color_black)
+                render.drawRect(flLeft - flSpacer - flBarWidth, flTop - 1, flBarWidth, flHeight + 1)
+                    
+                render.setColor(vHealthColor)
+                render.drawRect((flLeft - flSpacer - flBarWidth) + 1, vHealthPos, flBarWidth - flSpacer, flHealthScreen)
+            end
+            
+            if Variables.HealthAmount then
+                local flHealth = pPlayer:getHealth()
+                local strHealth = tostring(flHealth)
+                if flHealth ~= pPlayer:getMaxHealth() then
+                    tw, th = render.getTextSize(strHealth)
+                    
+                    local tx = flLeft - tw - (Variables.HealthBar and flSpacer + 5 or flSpacer)
+                    local ty = math.clamp(vHealthPos, flTop, flBottom - th)
+                    
+                    render.setColor(vHealthColor)
+                    render.drawText(tx, ty, strHealth)
+                end
+            end
+        end
+    end
+end)
+
+if player() == owner() then
+    enableHud(nil, true)
+end

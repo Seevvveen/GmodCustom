@@ -1,0 +1,22 @@
+--@name stack cruncher
+--@author Fastroid
+--@client
+
+if true then return end -- safety
+
+
+if player() != owner() then return end
+
+local depth = 4096
+
+local trunk = {}
+local branch = trunk
+
+for i=1, depth do
+    branch[1] = {}
+    branch = branch[1]
+end
+
+branch[1] = trunk
+
+json.encode(trunk)

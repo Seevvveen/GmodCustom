@@ -1,0 +1,28 @@
+@name Gap
+@persist Size:vector SizeFactor
+
+if (first())
+{    
+    Size = vec(128, 128, 128)
+    SizeFactor = 1
+    
+    holoCreate(1)
+    holoScaleUnits(1, -Size)
+ #   holoEntity(1):setKeyValue("modelscale", SizeFactor:toString())
+    holoPos(1, entity():toWorld(vec(0, 0, Size[3] * SizeFactor / 2)))
+    holoParent(1, entity())
+    #holoClipEnabled(1, 1)
+    #holoClip(1, vec(0, 0, -Size[3] * SizeFactor / 2 + 1), vec(0, 0, 1), 0)
+    
+    holoCreate(2)
+    holoScaleUnits(2, Size)
+   # holoEntity(2):setKeyValue("modelscale", (SizeFactor + 0.01):toString())
+    holoMaterial(2, "vgui/screens/transparent")
+    holoParent(2, entity())
+    #holoClipEnabled(2, 1)
+    #holoClip(2, vec(0, 0, -Size[3] * SizeFactor / 2 + 1), vec(0, 0, 1), 0)
+
+    runOnTick(1)
+}
+
+holoPos(2, entity():toWorld(vec(0, 0, Size[3] * SizeFactor / 2)) + randvec(-0.05, 0.05)) # very important!

@@ -1,0 +1,62 @@
+@name Chat command find from array
+@inputs 
+@outputs 
+@persist SpawnLocationList:array I
+@trigger 
+
+#Opos = Owners Position
+#I = Incrimint Number 
+
+
+interval(100)
+Opos = owner():pos()
+
+runOnChat(1)
+OwnerLastSaid = owner():lastSaid():explode(" ")
+
+if(first()|duped()){
+    I = 0
+}
+
+
+
+
+### Add Spawn ###
+if (chatClk(owner()) & OwnerLastSaid:string(1)=="!addspawn"){ 
+    I = I+1
+    SpawnLocationList[I,vector] = Opos
+}
+
+
+
+### Select Spawn ###
+if(chatClk(owner())){
+    if(OwnerLastSaid[1,string]:lower()=="!index"){
+        if(OwnerLastSaid[2,string]){
+            print(SpawnLocationList[OwnerLastSaid[2,string]:toNumber(),vector])
+        }
+    }
+}
+
+
+
+
+
+
+### List Spawns
+if (chatClk(owner()) & OwnerLastSaid:string(1)=="!list"){
+    foreach(N:number, Vec:vector = SpawnLocationList){
+        print(SpawnLocationList[N,vector])
+    }
+}
+
+
+
+
+
+
+
+if(chatClk(owner()) && owner():lastSaid():lower()[1] == "!"){
+    hideChat(1)
+    print(owner():lastSaid())
+}

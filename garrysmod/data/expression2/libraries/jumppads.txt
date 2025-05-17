@@ -1,0 +1,199 @@
+@persist [JumpPadData]:array [JumpPads JPTransmutationQueue Particles]:table Delay SpawnTimer
+@persist [LaunchPadData]:array [LaunchPads LPTransmutationQueue]:table
+
+#include "libraries/multi-holo"
+if(first()){
+    JumpPadData = array(
+        "models/props_combine/headcrabcannister01a.mdl",
+        "models/props_combine/combine_mine01.mdl",
+        "models/holograms/hq_torus_oldsize.mdl",
+        
+        "models/props_vents/borealis_vent001c",
+        "models/props_vents/borealis_vent001c",
+        "",
+        
+        vec(0.1,2,2),
+        vec(2,2,0.8),
+        vec(4,4,2),
+        
+        vec(0),
+        vec(-3.5,0,0),
+        vec(-3.5,0,5),
+        
+        ang(90,0,0),
+        ang(0),
+        ang(0),
+        
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,0,0,100),
+        
+        0,0,1
+    )
+    
+    JumpPadData[0,number] = 3
+    
+    LaunchPadData = array(
+        "models/props_combine/combine_bridge.mdl",
+        "models/props_combine/combine_bridge_b.mdl",
+        
+        "models/props_vents/borealis_vent001c",
+        "models/props_vents/borealis_vent001c",
+        
+        vec(0.1,0.35,0.19),
+        vec(0.4,0.38,0.08),
+        
+        vec(40,0,0),
+        vec(170,0,-11.2),
+        
+        ang(-90,0,0),
+        ang(0),
+        
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        
+        0,0
+    )
+    
+    LaunchPadData[0,number] = 2
+    
+    function void jumppadCreate(Pos:vector,Ang:angle,Power){
+        local Pad = propSpawn("models/hunter/plates/plate05x05.mdl",Pos,Ang,1)
+        Pad:setAlpha(0)
+        Pad:setMass(50000)
+        JPTransmutationQueue:pushArray(array(Pad,Power))
+    }
+    
+    function void launchpadCreate(Pos:vector,Ang,Power){
+        local Pad = propSpawn("models/hunter/plates/plate05x05.mdl",Pos+vec(0,0,14),ang(-33,Ang,0),1)
+        Pad:setAlpha(0)
+        Pad:setMass(50000)
+        LPTransmutationQueue:pushArray(array(Pad,Power))
+    }
+    
+    function spawnParticle(Ent:entity, Pos:vector, Ang:angle) {
+        HC++
+        holoCreate(HC, Pos, vec(4,4,0.2), Ang, vec4(255,0,0,100), "models/holograms/hq_cone.mdl")
+        holoParent(HC, Ent)
+        holoDisableShading(HC,1)
+
+        # tables require strings as keys so...
+        local ID = HC:toString()
+
+        Particles[ID,number] = realtime() + 1
+    }
+    
+    function void jumppadFunctionality(Allow:array){
+        if(JPTransmutationQueue:count() > 0 & holoRemainingSpawns() > 3){
+            if(JPTransmutationQueue[1,array][1,entity]:isValid()){
+                local HoloArray = multiHolo(JPTransmutationQueue[1,array][1,entity],JumpPadData)
+                JumpPads:pushTable(table(JPTransmutationQueue[1,array][1,entity],JPTransmutationQueue[1,array][2,number],HoloArray))
+            }
+            JPTransmutationQueue:remove(1)
+        }
+        
+        for(I=1,JumpPads:count()){
+            local CurrJumpPad = JumpPads[I,table][1,entity]
+            local JumpPower = JumpPads[I,table][2,number]
+            
+            if(!CurrJumpPad:isValid()){
+                JumpPads:remove(I)
+            }
+                
+            local JPPos = CurrJumpPad:pos()
+            
+            local RealTime = realtime()
+            if(RealTime > Delay){
+                local Dist = 50
+                foreach(K,V:entity = Allow){
+                    if(changed(V:pos():distance(JPPos) <= Dist) & V:pos():distance(JPPos) <= Dist){ 
+                        V:applyPlayerForce(CurrJumpPad:up()*JumpPower)
+                        #V:soundPlay("Boost",0,"items/powerup_pickup_supernova.wav")
+                        Delay = RealTime + 0.5
+                    }
+                }
+            }
+            local Up = CurrJumpPad:up()
+        
+            if (RealTime > SpawnTimer) {
+                SpawnTimer = RealTime + 0.28
+        
+                # spawn a (fake) particle
+                spawnParticle(CurrJumpPad,CurrJumpPad:toWorld(vec(-3.5,0,0)), CurrJumpPad:toWorld(ang(0)))
+            }
+        
+            foreach (ID, Lifetime:number = Particles) {
+                local HoloID = ID:toNumber()
+        
+                if (RealTime > Lifetime) {
+                    holoDelete(HoloID)
+                    Particles:remove(ID)
+                }
+                else {
+                    # how much time has passed since we spawned this particle
+                    local ElapsedTime = 1 - (Lifetime - RealTime)
+        
+                    holoPos(HoloID, CurrJumpPad:toWorld(vec(-3.5,0,0)) + Up * 40 * ElapsedTime)
+                    holoAlpha(HoloID, sin(ElapsedTime * 60) * 125)
+                }
+            }
+        }
+    }
+    
+    function void launchpadFunctionality(Allow:array) {
+        if(LPTransmutationQueue:count() > 0 & holoRemainingSpawns() > 2){
+            if(LPTransmutationQueue[1,array][1,entity]:isValid()){
+                local HoloArray = multiHolo(LPTransmutationQueue[1,array][1,entity],LaunchPadData)
+                LaunchPads:pushTable(table(LPTransmutationQueue[1,array][1,entity],LPTransmutationQueue[1,array][2,number],HoloArray))
+            }
+            LPTransmutationQueue:remove(1)
+        }
+        
+        for(I=1,LaunchPads:count()){
+            local CurrLaunchPad = LaunchPads[I,table][1,entity]
+            local LaunchPower = LaunchPads[I,table][2,number]
+            
+            if(!CurrLaunchPad:isValid()){
+                LaunchPads:remove(I)
+            }
+                
+            local LPPos = CurrLaunchPad:pos()
+            
+            local RealTime = realtime()
+            if(RealTime > Delay){
+                local Dist = 50
+                foreach(K,V:entity = Allow){
+                    if(changed(V:pos():distance(LPPos) <= Dist) & V:pos():distance(LPPos) <= Dist){ 
+                        V:applyPlayerForce(CurrLaunchPad:forward()*LaunchPower)
+                        #V:soundPlay("Boost",0,"items/powerup_pickup_supernova.wav")
+                        Delay = RealTime + 0.5
+                    }
+                }
+            }
+            local Up = CurrLaunchPad:forward()
+        
+            if (RealTime > SpawnTimer) {
+                SpawnTimer = RealTime + 0.28
+        
+               #  spawn a (fake) particle
+               spawnParticle(CurrLaunchPad,CurrLaunchPad:toWorld(vec(-3.5,0,0)), CurrLaunchPad:toWorld(ang(0)))
+            }
+        
+            foreach (ID, Lifetime:number = Particles) {
+                local HoloID = ID:toNumber()
+        
+                if (RealTime > Lifetime) {
+                    holoDelete(HoloID)
+                    Particles:remove(ID)
+                }
+                else {
+                    # how much time has passed since we spawned this particle
+                    local ElapsedTime = 1 - (Lifetime - RealTime)
+        
+                    holoPos(HoloID, CurrLaunchPad:toWorld(vec(-3.5,0,0)) + Up * 40 * ElapsedTime)
+                    holoAlpha(HoloID, sin(ElapsedTime * 60) * 125)
+                }
+            }
+        }
+    }
+}

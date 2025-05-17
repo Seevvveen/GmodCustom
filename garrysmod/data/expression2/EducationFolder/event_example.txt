@@ -1,0 +1,85 @@
+@name event example :)
+@inputs 
+@persist CoolDown:number
+@strict
+
+if(first()){
+    CoolDown = 0
+    fileAppend("test.txt", toString(randint(1, 1000000000)))
+    fileLoad("test.txt")
+}
+
+# this runs when someone spawns
+event playerSpawn(Player:entity) { 
+    print(format("this retard spawned %s", Player))
+}
+
+
+# this runs when someone connects to the server
+event playerConnected(Player:entity) {
+    print(format("this retard connected %s", Player))
+}
+
+
+# this runs when someone disconnects from the server
+event playerDisconnected(Player:entity) { 
+    print(format("this retard disconnected %s", Player))
+}
+
+# this runs when someone dies
+event playerDeath(Target:entity, KilledWith:entity, Attacker:entity) { 
+    print(format("%s got blasted of the face of the earth by %s with %s", Target, Attacker, Attacker:isValid() ? Attacker:weapon() : KilledWith))    
+}
+
+
+# this runs whenever someone presses a key
+event keyPressed(Player:entity, KeyString:string, HoldingDown:number, NameOfKey:string) { 
+    if(Player == owner()){ # just so chat doesnt get spammed into oblivion
+        print(format("%s %s %s %s", Player, KeyString, HoldingDown, NameOfKey))
+    }
+}
+
+
+# this runs whenever someone types something in chat
+event chat(Player:entity, Message:string, Thing:number) { 
+    print(format("%s said '%s' and thing is %s", Player, Message, Thing)) # i still dont know what Thing is but its probably not important
+}
+
+
+# whenever someone press the use key on the e2
+event chipUsed(Player:entity) { 
+    print(format("%s pressed 'E' on this e2", Player))   
+}
+
+
+# this runs when the e2 gets deleted
+event removed(Number:number) { 
+    print(format("this e2 got removed :scream: %s", Number))  # again idk what Number is but its probably not important
+}    
+
+
+# basically whenever you use an input from @inputs, itll run the code inside the event
+event input(InputName:string) {
+    print(format("this input got used %s", InputName))
+}
+
+
+# this runs whenever you load a file
+event fileLoaded(FileName:string, Contents:string) { 
+    print(format("%s just got loaded, and its contents are %s", FileName, Contents))
+}   
+
+
+# this runs when a file fails to load
+event fileErrored(String:string, Number:number) { 
+    print(format("%s failed to load %s", String, Number))
+}
+
+
+# basicallly just runOnTick() but better
+event tick() { 
+    if(systime() - CoolDown >= 2){
+        print("im running on every tick but this message is on a cool down to prevent spam :)")
+        CoolDown = systime()
+    }
+}

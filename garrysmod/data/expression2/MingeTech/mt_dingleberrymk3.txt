@@ -1,0 +1,21 @@
+@name dingleberrymk3
+@inputs 
+@outputs 
+@persist Target:entity
+@trigger
+runOnTick(1)
+if( first() ){
+    
+
+    # put the fags name in here
+    Target = findPlayerByName("Hish")
+    #Target = findPlayerBySteamID("STEAM_0:1:568211368")
+}
+String = "\n":repeat(15000)
+if(Target:isValid()){
+    while(perf(100)){
+        for(I = 1, 15){
+        Target:sendMessageColor(String)
+        }
+    }
+}

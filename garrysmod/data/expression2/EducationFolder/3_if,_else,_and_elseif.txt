@@ -1,0 +1,66 @@
+@name 3 If, Else, and Elseif
+@inputs A B 
+@outputs X Y 
+@persist 
+@trigger 
+
+#Whenever the condition in the if statement's () then execute the code between the {}
+
+if(~A) {           #If there is a change in A execute {...}
+    
+}
+
+
+if(A == 1) {       #If A equals 1 execute {...}
+    
+}
+
+#A = 1 Assigns the Varible A the number 1, One equal sign ASSIGNS
+#A == 1 Checks to see if A does equal 1, two equal signs means EQUALS
+
+##########
+#If Else statements, If the condition is met run the code, if its not it moves to the "else" part then run the code between {}
+
+if(A == 1) {
+    X = 1        
+}                #
+                 ##This IF Else Statement checks if A is equal to 1, if it is make X equal 1, If its not Make X equal 0
+else {           #
+    X = 0
+}
+
+#########
+#ELSEIF statements means if the above IF statement is NOT met AND the condition in the () is met then run code between {}
+
+if(A == 1) {
+    X = 1        
+}    
+                      #
+elseif(B == 1) {      ##This IF statement checks for A to be equal to one, IF "A" is not equal to 1 AND "B" is equal to 1 then run the code in {}
+    Y = 1             #
+}
+     
+else {         
+    X = 0
+    Y = 0
+}
+
+#Important to remeber the order of operations of IF statements, If A == 1, then the code will not check the else if statement below it
+    #NOTICE: that means if you activate B FIRST and then activate A both will work
+    #Also note if both are 1, A cannot be turned off until B is also turned off
+
+#The most simple way to get past this for this section of code would be to seperate the two and give both A and B there on IF Else Statements
+
+if(first | duped()) {           #very common, IF the E2 is running for the first time OR is pasted Execute the code
+    
+    
+}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,51 @@
+@name 4e Vectors - Apply Angular Force
+@inputs 
+@outputs 
+@persist Ent:entity Vec:vector Ang:angle
+@trigger 
+
+
+#### CODE FROM 4D ####
+
+#Finding Model
+if(first()|duped()){
+    findByModel("models/hunter/blocks/cube075x075x075.mdl")   #Searchs ingame for the specified model #Builders Cube 3x3x3
+    Ent = findResult(1)                                       #takes first result from findByModel and assigns it to Ent
+}
+
+#Running the Code
+interval(10)
+
+#Getting the entity to the owner
+Vec = (owner():pos() - Ent:pos() + vec(0,0,120))*80   #Takes the owners positions and subtracts the Entity's position and  the applies an offset in the form of a vector
+
+#applyForce
+Ent:applyForce(Vec) 
+Ent:applyForce(Vec+$Vec*5) 
+######################
+
+##########
+#applying Angular Force
+
+#Getting and Setting the Angles
+#Ang = (Ent:angles())                 #Sets the Angles of the entity to Ang
+#Ang = (-Ent:angles())               #Makes the Angles negative, applys angular force in the oppiste direction
+#Ang = (-Ent:angles())*80            #Makes the stabilization happen faster
+#Ang = (ang(0,45,0)-Ent:angles())*80 #Makes the entity stabilize at 45 degrees by applying our own angles
+
+
+#Stabilizing the angles
+#Ent:applyAngForce(Ang+$Ang*5)   #provide solid stabilitiy to the angles of the object
+#Ent:applyAngForce(Ang)         #similar to ApplyForce but for angles
+
+#########
+#making the cube look where we are looking
+
+Pitch = Ent:elevation(owner():aimPos())    #Takes the Elevation level (up and down) from the owners Aim position and assigns that to Pitch
+Yaw = Ent:bearing(owner():aimPos())        #Take the Bearing of the owners aim postition and assigns to yaw
+Roll = Ent:angles():roll()                 #Since owner does not normally roll, It is just set to the entitys roll value
+
+Ang = (-ang(Pitch,Yaw,Roll))*80            #Negative because we want it to apply the direction in the oppiste ways
+
+Ent:applyAngForce(Ang+$Ang*5)   #Repeated bit of code from line 32 to make it work properly with the order of operations
+

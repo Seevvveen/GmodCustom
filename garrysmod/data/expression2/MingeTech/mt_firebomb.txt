@@ -1,0 +1,36 @@
+@name 
+@inputs 
+@outputs
+@persist Nade:string Count Amount
+@trigger 
+@strict
+
+# Molly  = swcs_molotov_projectile
+# Flashbang = swcs_flashbang_projectile
+# Smoke = swcs_smokegrenade_projectile
+# Test = swcs_testnade_projectile
+# C4 = swcs_planted_c4
+#missile = swcs_planted_c4
+
+if(first()|duped()){
+    propSpawnUndo(0)
+    entity():setMass(50000)
+    Nade = "swcs_planted_c4"
+    Amount = 250
+    
+    Count = 0
+    findIncludePlayerProps(owner())
+}
+
+event tick(){
+    if(Count <= Amount){
+        entSpawn(Nade,entity():pos()+vec(randint(-150,150),randint(-150,150),randint(500)),owner())
+        Count++
+    }
+}
+
+event removed(Resetting:number) {
+    selfDestructAll()   
+}
+
+

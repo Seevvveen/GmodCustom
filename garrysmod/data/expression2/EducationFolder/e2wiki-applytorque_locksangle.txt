@@ -1,0 +1,21 @@
+@name E2Wiki-ApplyTorque
+@inputs 
+@outputs 
+@persist
+@trigger 
+
+
+runOnTick(1)
+
+findByModel("models/hunter/blocks/cube075x075x075.mdl")   #3x3 builders cube 
+Prop = find()   
+
+Ang = 120
+
+    Torque = Prop:toLocalAxis(rotationVector(quat(Ang) / quat(Prop)))
+        #rotationVector(quat(Ang)/quat(E)) - the rotation in X Y and Z axis that the entity has to rotate
+        #The direction of that vector is the rotation axis, and the length describes the torque around that axis
+    
+    
+    Prop:applyTorque((Torque*200 - Prop:angVelVector()*20) * Prop:inertia())
+        #Multiply out torque by a factor, then subtract angle velocity vector to prevent the acceleration from overshoting the target 

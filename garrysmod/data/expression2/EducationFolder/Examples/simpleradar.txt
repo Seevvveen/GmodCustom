@@ -1,0 +1,25 @@
+@name Simple Radar
+@outputs X Y
+@persist RangerNumber Ranger:ranger
+
+if(first()){
+    entity():setPos(entity():pos()+vec(0,0,50)) #lift the chip into the air
+    holoCreate(1,entity():pos()+vec(0,0,300),vec(0.25,0.25,50),ang(),vec4(255),"cube") #visualize ranger beam
+    holoParent(1,entity()) #parent the beam to the chip
+    
+    holoCreate(2,entity():pos()+vec(0),vec(1),ang(),vec4(255),"cube") #Create the Hologram for the end position
+    
+    RangerNumber = 600 #Ranger Distance
+    
+}
+
+event tick(){
+    entity():setAng(ang(-90,curtime()*75,0)) #Set the chip sideway and rotate around the yaw axis
+    Ranger = rangerOffset(RangerNumber,entity():pos(),entity():up()) #Setup the Ranger
+    
+    holoPos(2,Ranger:pos()) #Set endpos hologram 
+    
+    X = sin(entity():angles()[2])*(Ranger:distance()/RangerNumber) #Calculate the X position on the Osciliscreen
+    Y = cos(entity():angles()[2])*(Ranger:distance()/RangerNumber) #Calculate the Y position on the Osciliscreen
+
+}

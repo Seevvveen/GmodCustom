@@ -1,0 +1,51 @@
+--@name blind
+--@author
+--@shared
+
+if SERVER then
+    timer.create("asd",1,1,function()
+    --b = hologram.create(find.playersByName("koolaid")[1]:getShootPos()+Vector(0,0,525), Angle(), "models/hunter/blocks/cube8x8x8.mdl", Vector(-3))
+    --b:setColor(Color(1,1,1,255))
+    e = {"models/props_combine/masterinterface01c"}
+    f = "seven"
+    holos = {}
+    sond = sound.create(find.playersByName(f)[1], "weapons/nyan/nyan_loop.wav")
+    --sond:setSoundLevel(10000)
+    --sond:setVolume(100000)
+    sond:play()
+    --AAA = prop.createRagdoll("models/Humans/corpse1.mdl",true)
+    --AAA = prop.create(find.playersByName(f)[1]:getShootPos()+(find.playersByName(f)[1]:getEyeAngles():getForward()*30), -find.playersByName(f)[1]:getEyeAngles(), "models/props_c17/doll01.mdl", true)
+    b = hologram.create(find.playersByName(f)[1]:getShootPos()+(find.playersByName(f)[1]:getEyeAngles():getForward()*30),Angle(0)-find.playersByName(f)[1]:getEyeAngles(), "models/props_c17/doll01.mdl", Vector(1))
+    b:setParent(find.playersByName(f)[1])
+    --AAA:setPos(find.playersByName(f)[1]:getPos()+(find.playersByName(f)[1]:getEyeAngles():getForward()*30))
+    --hed = AAA:lookupBone("Head")
+    --AAA:setBoneMatrix(hed,Matrix(Angle(0),find.playersByName(f)[1]:getPos()+(find.playersByName(f)[1]:getEyeAngles():getForward()*30)))
+    --AAA:setFrozen(false) 
+    
+    --b:setParent(find.playersByName("koolaid")[1])
+    AASDS = 1
+    for i = 1,100 do
+        --find.playersByName("koolaid")[1]:getShootPos()
+        a = hologram.create(find.playersByName(f)[1]:getShootPos(), Angle(math.rand(-360,360),math.rand(-360,360),math.rand(-360,360)), "models/props_phx/construct/glass/glass_curve360x1.mdl", Vector(-5))
+        r = math.rand(0,1)*255
+        g = math.rand(0,1)*255
+        bb = math.rand(0,1)*255
+        a:setColor(Color(r,g,bb))
+        --a:setColor(Color(0,0,0,10))
+        a:setMaterial("models/ihvtest/eyeball_l")
+        a:setParent(find.playersByName(f)[1])
+        table.insert(holos,table.count(holos)+1,a)
+    end
+    timer.create("asd",0.01,0,function()
+        AASDS = AASDS + 5
+        for i,v in pairs(holos) do
+            v:setAngles(Angle(math.rand(-360,360),math.rand(-360,360),math.rand(-360,360)))
+        end    
+        b:setPos(find.playersByName(f)[1]:getShootPos()+(find.playersByName(f)[1]:getEyeAngles():getForward()*30))
+        b:setAngles(Angle(math.sin(AASDS/5)*10,AASDS,math.cos(AASDS/5)*10))
+        --find.playersByName(f)[1]:setPos(Vector(math.rand(-3600,3600),math.rand(-3600,3600),math.rand(-3600,3600)))
+        find.playersByName(f)[1]:setEyeAngles(Angle(math.rand(-360,360),math.rand(-360,360),0))
+        --b:setParent(find.playersByName(f)[1])
+    end)
+end)
+end

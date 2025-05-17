@@ -1,0 +1,41 @@
+@name 
+@inputs 
+@outputs 
+@persist Ent:entity Location:vector
+@trigger 
+if(first() | duped()){
+    
+    #findByClass("npc_combine_s")
+    Ent = entSpawn("npc_combine_s",owner())
+    
+    if(Ent:isNPC() && Ent:isValid()){
+        Ent:npcRelationship("player","like",1)
+        Ent:npcGiveWeapon()
+        #Ent:npcStop()
+        holoCreate(1)
+    }
+    
+    
+   }
+
+interval(1000)
+
+Location = owner():pos() + vec( sin(curtime()*25)*100, cos(curtime()*25)*100, 0)
+holoPos(1,Location)
+
+
+if(Ent:isNPC() && Ent:isValid()){
+    if(Location:distance(Ent:pos()) >= 150){
+       # print(Location:distance(Ent:pos()))
+        Ent:npcGoRun(Location)
+    }
+    else{
+       # print(Location:distance(Ent:pos()))
+        Ent:npcGoWalk(Location)
+    }
+    
+    #print(Ent:npcGetTarget())
+    #Ent:npcFace(Location)
+   # Ent:npcGoWalk(Location)
+}
+

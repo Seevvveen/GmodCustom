@@ -1,0 +1,285 @@
+@name SuperBubble V1
+@inputs 
+@outputs 
+@persist Base:entity Whitelist:table RespawnTable:table KeysTable:table Size PropShield:entity SphereModel:string LastUpdate:number
+####
+#### Prop-based Shield, should stop most bullets and projecticles
+####
+#### Inspiration: Katsu & StyledStrike & Anane
+#### Author: Seven#7222
+
+# Note
+# Chip Must be Placed on floor level or lower, if not people teleport into floor
+# Also this is V1 and chip runs like shit
+
+if(first()|duped()){
+    
+    Base = entity()
+    Base:setMass(50000)
+    Size = 80 #cannot change size need to rework teleporters 
+    SphereModel = "models/holograms/icosphere3.mdl"
+    Whitelist = table()
+    RespawnTable =table()
+    KeysTable = table()
+    PropShield = noentity()
+    LastUpdate = 0
+    
+    Whitelist[owner():steamID(),string] = owner():steamID() #Force Add owner to whitelist on start
+    propSpawnUndo(0)
+    
+    
+    holoCreate(1,entity():pos(),vec(Size),ang(),vec4(35,35,35,0),SphereModel) # Holo to hide the inside
+        holoParent(1, Base)
+        holoDisableShading(1, 1)
+    
+    holoCreate(2,entity():pos(),vec(-Size),ang(),vec4(35,35,35,0),SphereModel) # Holo to see outside
+        holoParent(2, Base)
+        holoDisableShading(2, 1)
+    
+    holoCreate(3,entity():pos(),vec(Size)*1.001,ang(),vec4(255,255,255,0),SphereModel) # Outer Holo Wireframe
+        holoParent(3, Base)
+        holoMaterial(3, "models/wireframe")
+        holoDisableShading(3, 1)  
+
+    holoCreate(4,entity():pos(),vec(-Size)*0.999,ang(),vec4(255,255,255,0),SphereModel) # Inner Holo Wireframe
+        holoParent(4, Base)
+        holoMaterial(4, "models/wireframe")
+        holoDisableShading(4, 1)
+        
+    function addPlayerToWhitelist(PlyName:string) { # Self Documenting
+        local Ply = findPlayerByName(PlyName)
+        if (Ply:isValid()){
+            Whitelist[Ply:steamID(),string] = Ply:steamID()
+        }
+    }
+    
+    function whitelistAddSteamID(PlySteamID:string){
+        Whitelist[PlySteamID,string] = PlySteamID
+    }
+
+    function array findAroundMutiple(Array:array,Center:vector,Radius:number) { # Basically findInSphere() but supposedly better. Idk
+        Radius = Radius * Radius
+        local ReturnArray = array()
+
+        foreach(_,V:entity = Array){
+            local Dist = Center:distance2(V:pos())
+            
+            if(Dist < Radius & V:isAlive() & V:isValid() & ReturnArray:getIndex(V) < 1 ){
+                ReturnArray:pushEntity(V)
+            }
+        }
+        return ReturnArray
+    }
+    
+    function number entity:whitelisted(Whitelist:table){ # Self Documenting
+        if(Whitelist:exists(This:steamID())){
+            return 1
+        }
+        else{
+            return 0
+        }
+    }
+    
+    function number vector:aimingPercent(V:vector){ #thanks vurv :D
+        # Gives you percentage from 0 - 100% of whether vector is aiming at the other.
+        return (This:dot(V)/V:length()*100+100)/2
+    }
+    
+    
+    function void updateWhitelist(){
+        ### Force Add People to Whitelist ### 
+        #addPlayerToWhitelist("")
+    addPlayerToWhitelist("Zwick2376")
+    addPlayerToWhitelist("Tooty582")
+    addPlayerToWhitelist("lemoni")
+    addPlayerToWhitelist("Aiko")
+    #addPlayerToWhitelist("Exodium")
+    addPlayerToWhitelist("captain bacon#PatchTitanfall2")
+    addPlayerToWhitelist("Seven")
+    addPlayerToWhitelist("FaZe 360 = Disconnect")
+    addPlayerToWhitelist("mechoyan")
+    addPlayerToWhitelist("Laputa")
+    addPlayerToWhitelist("goofball")
+    whitelistAddSteamID("STEAM_0:0:629496018") #Shadow
+    whitelistAddSteamID("STEAM_0:0:225043089") #HJummel
+    whitelistAddSteamID("STEAM_0:1:195076909") #Uwah
+    whitelistAddSteamID("STEAM_0:0:159247317") #Crxpy
+    whitelistAddSteamID("STEAM_0:0:202804167") #Dark
+    addPlayerToWhitelist("Leon")
+    whitelistAddSteamID("STEAM_0:1:53193910") #Kripalida
+    whitelistAddSteamID("STEAM_0:1:96173579") #KILLER
+    whitelistAddSteamID("STEAM_0:1:125508575") #mario
+    
+    
+    
+    
+    }
+
+    
+
+    foreach(_, Person:entity = Whitelist){
+        findExcludePlayerProps(Person)
+    }
+
+}
+
+
+event tick() {
+    ###Respawning###
+    # 1 = Respawn Toggle | 2 = SpawnRotation |
+    if(owner():isAlive()){
+        if(RespawnTable[1,number] == 0){ #
+            RespawnTable[2,angle] = owner():eyeAngles()
+            RespawnTable[3,vector] = Base:pos() + vec(randint(-200,200),randint(-200,200),0)
+            #print(RespawnTable[3,vector])
+        }
+        else{
+            owner():plySetAng(RespawnTable[2,angle])
+            owner():plySetPos(RespawnTable[3,vector])    
+            if(owner():pos() == RespawnTable[3,vector]){
+                RespawnTable[1,number] = 0
+            }
+        }
+    }
+    else{
+        RespawnTable[1,number] = 1
+    }
+    
+    
+    
+    ###Sheild Toggling Logic###
+    KeysTable["KeyPressed",number] = owner():keyPressed("g")  #### THIS KEY TOGGLES SHIELD ###
+    
+    if(changed(KeysTable["KeyPressed",number]) & KeysTable["KeyPressed",number]) { # Not the best but works
+        if(KeysTable["Enabled",number] == 0) { # Runs once when Shield is Enabled
+            KeysTable["Enabled",number] = 1
+            printColor(vec(0,255,0),"  <== Shield Enabled! ==>  ")
+            Base:soundPlay(1, 4, "items/powerup_pickup_regeneration.wav"), soundPitch(1, 55)
+            Base:soundPlay(2, 0, "combine.sheild_loop"), soundPitch(2, 90), soundVolume(2, 0.5),
+            Base:propFreeze(1)
+            
+            holoAlpha(1,255)
+            holoAlpha(2,75)
+            holoColor(3,vec4(255,0,0,255))
+            holoColor(4,vec4(0,255,0,255))
+            
+            updateWhitelist()
+
+        }
+        else { # Runs Once When Shield is Disabled
+            KeysTable["Enabled",number] = 0
+            printColor(vec(255,0,0),"  <== Shield Disabled! ==>  ")
+            Base:soundPlay(1, 4, "items/powerup_pickup_resistance.wav"), soundPitch(1, 90), soundVolume(1, 0.4),
+            soundStop(2)
+            
+            holoAlpha(1,0)
+            holoAlpha(2,0)
+            holoColor(3,vec4(0,255,0,45))
+            holoColor(4,vec4(0,255,0,45))
+            
+            PropShield:propDelete()
+            
+        }
+    }
+    
+    if(KeysTable["Enabled",number]){
+        
+        holoAng(1,ang(0,curtime()*25,0))
+        holoAng(2,ang(0,curtime()*25,0))
+        holoAng(3,ang(0,curtime()*25,0))
+        holoAng(4,ang(0,curtime()*25,0))
+        
+        foreach(_, IterTarget:entity = findAroundMutiple(players(),entity():pos(),Size*6.5)){ # For each around shield
+            local AwayPos = Base:pos() + (IterTarget:pos() - Base:pos()):normalized() * Size*7.5 # Calc Away Position
+            if(IterTarget:whitelisted(Whitelist)){
+                findExcludePlayerProps(IterTarget)
+                
+                # Whitelisted Regen #
+                if (IterTarget:health() < 100) {
+                    IterTarget:plySetHealth(IterTarget:health() + 5)
+                }
+                if (IterTarget:armor() < 100) {
+                    IterTarget:plySetArmor(IterTarget:armor() + 5)
+                }
+                
+                ## Whitelisted people teleport in ##
+                if(IterTarget:pos():distance(entity():pos()) > Size*6.2 & IterTarget:pos():distance(entity():pos()) < Size*6.5){
+                    if(IterTarget:aimPos():aimingPercent(entity():pos()) > 10){
+                        IterTarget:teleport(Base:pos() + (IterTarget:pos() - Base:pos()):normalized() * Size*4.5) # Same Calc as AwayPos but smaller so inside shield :P
+                    }
+                }
+                
+                ## Whitelisted Teleport Out ##
+                if(IterTarget:pos():distance(entity():pos()) > Size*5 & IterTarget:pos():distance(entity():pos()) < Size*6){
+                    if(IterTarget:aimPos():aimingPercent(entity():pos()) > 10){
+                        IterTarget:teleport(AwayPos)
+                    }
+                }
+                continue
+                
+            }
+            else{ # Person is not whitelisted
+                findIncludePlayerProps(IterTarget)
+                #ifdef admSetAng(a)
+                IterTarget:admSetAng(ang(randint(360)))
+                #endif
+                IterTarget:teleport(AwayPos)
+            }
+            
+            local Time = systime()
+            if(Time - LastUpdate >= 0.5){
+                LastUpdate = Time
+                    
+                findIncludeClass("pac_projectile")
+                findIncludeClass("prop_physics")
+                findIncludeClass("npc")
+                findIncludeClass("acf_gun")
+                findInSphere(entity():pos(),Size*7.5)
+                
+                #ifdef e:admPropBreak() | e:admPropDelete()
+                DeleteMe  = findToArray()
+                foreach (_, Value:entity = DeleteMe){
+                    Value:admPropBreak()
+                    Value:admPropDelete()
+                }
+                #else
+                DeleteMe  = findToArray()
+                foreach (_, Value:entity = DeleteMe){
+                    Value:propBreak()
+                    Value:propDelete()
+                }
+                #endif
+            }
+    
+        }
+        
+        ### PropShield ###
+        if(PropShield:isValid()){ # PropShield Exists
+            if(!PropShield:isFrozen()){
+                PropShield:propFreeze(1)
+            }
+            #ifdef e:admSetCollisionGroup(n)
+            PropShield:admSetCollisionGroup(5)
+            #endif
+            findExcludeEntity(PropShield)
+            
+        }
+        else{ # PropShield Doesnt Exist
+            PropShield = propSpawn("models/hunter/misc/shell2x2.mdl", Base:pos()+vec(0,0,10), ang(0), 1)
+            PropShield:setPhysScale(100)
+            PropShield:propFreeze(1)
+            PropShield:setMass(50000)
+            PropShield:setAlpha(0)
+        }  
+    }
+}
+
+
+event playerConnected(_:entity) {
+    updateWhitelist()
+}
+event playerDisconnected(_:entity) {
+    updateWhitelist()
+}
+
+

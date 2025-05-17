@@ -1,0 +1,66 @@
+@name Dark Forest Stencil
+@inputs 
+@outputs 
+@persist PropNum X Y Theta Brightness
+@trigger 
+ 
+if(first() || duped()){
+    entity():setAlpha(0)
+ 
+    holoCreate(1, entity():pos() + entity():up() * 128, vec(1, 1, 0.5) * -512 / 47.5, entity():angles(), vec(), "models/hunter/blocks/cube1x1x1.mdl")
+    holoDisableShading(1, 1)
+    holoParent(1, entity())
+ 
+    holoCreate(2, entity():pos() + entity():up() * 1500, vec(1, 1, 1) * -8.085, entity():angles(), vec(), "models/hunter/blocks/cube8x8x8.mdl")
+    holoAlpha(2, 0)
+    holoDisableShading(2, 1)
+    holoParent(2, entity())
+ 
+    PropNum = 3
+    X = -6
+    Y = -6
+    Theta = 0
+    Brightness = 100
+ 
+    stencilCreate(1)
+    stencilColor(1, vec())
+    stencilAddReferenceEntity(1,1)
+    stencilAddEntity(1, 2)
+ 
+    runOnTick(1)
+}
+ 
+if(last()){
+    holoDeleteAll()
+}
+ 
+if(tickClk()){
+    while(perf() && holoCanCreate()){
+        if(Y <= 6){
+            holoCreate(PropNum, entity():pos() + entity():right() * (-128 + 256 * X) + entity():forward() * (-128 + 256 * Y), vec(1, 1, 1) * 256 / 12, entity():angles(), vec(1, 1, 1) * Brightness, "plane")
+            holoMaterial(PropNum, "phoenix_storms/ps_grass")
+            holoDisableShading(PropNum, 1)
+            holoParent(PropNum, entity())
+            holoAlpha(PropNum, 0)
+ 
+            stencilAddEntity(1, PropNum)
+            PropNum++
+            X++
+            if(X > 6){
+                X = -6
+                Y++
+            }
+        }elseif(Theta < 360){
+            holoCreate(PropNum, entity():pos() + entity():right() * 1408 * cos(Theta) + entity():forward() * 1408 * sin(Theta), vec(1, 1, 1), entity():angles() + ang(0, Theta + 45, 0), vec(1, 1, 1) * Brightness, "models/props/CS_militia/tree_large_militia.mdl")
+            holoDisableShading(PropNum, 1)
+            holoParent(PropNum, entity())
+            holoAlpha(PropNum, 0)
+ 
+            stencilAddEntity(1, PropNum)
+            PropNum++
+            Theta += 360 / 28
+        }else{
+            runOnTick(0)
+        }
+    }
+}

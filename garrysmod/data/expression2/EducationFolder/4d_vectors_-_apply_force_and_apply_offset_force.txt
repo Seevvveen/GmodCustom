@@ -1,0 +1,43 @@
+@name 4D Vectors - Apply Force and Apply Offset Force
+@inputs 
+@outputs 
+@persist Vec:vector Ent:entity X
+@trigger 
+
+if(first()|duped()){
+    findByModel("models/hunter/blocks/cube075x075x075.mdl")   #Searchs ingame for the specified model
+    Ent = findResult(1)                                       #takes first result from findByModel and assigns it to Ent
+}
+
+interval(10)
+
+##########
+#Getting the entity to the owner
+
+Vec = (owner():pos() - Ent:pos() + vec(0,0,120))*80   #Takes the owners positions and subtracts the Entity's position and  the applies an offset in the form of a vector
+
+
+###########
+#applyForce
+
+Ent:applyForce(Vec)   #Applies force to the entity using the Vec variable
+
+#Vec = (owner():pos() - Ent:pos() + vec(0,0,120))*10 - Mutiplying this section gives more kick to the ApplyForce Command
+    #Tip: Taking the wait a mutiplying it by 10 and using that number as the mutipler helps with stability 
+    
+Ent:applyForce(Vec+$Vec*5)  #takes the Vecter and adds it to change in vector ($) mutiplied by 5
+    #To take the delta it must be the persist section
+
+
+#Apply Offset Force Take a vecotr with respect to another vector and apply force ???? dont know
+#Ent:applyOffsetForce(Vec,$Vec*5)
+
+###########
+#Creating a Counter - making the model rotate around in circle
+X = X + 1   
+#X++        #Alternate way of incrementing
+
+#Using that incremental in the entity postion
+#Vec = (owner():pos() - Ent:pos() + vec(120*cos(X),120*sin(X),120))*80     #Uses Cos and Sin Mutiplied by the incrmenting value of X to make entity go in circle
+
+#Vec = (owner():pos() - Ent:pos() + vec(120*cos(X),120*sin(X),50+25*sin(X)))*80   #looking at the last vector componet, The sin componet will only subtract a minimum of 25 or add a maximum of 25 - If you want faster up and down waves you can mutiple the X Varible

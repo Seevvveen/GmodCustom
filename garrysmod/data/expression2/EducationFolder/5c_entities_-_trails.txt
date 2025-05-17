@@ -1,0 +1,17 @@
+@name 5c Entities - Trails
+@inputs Start Stop
+@outputs 
+@persist Ent:entity
+@trigger
+    
+findByClass("player")   #Finds All players, goes in order from top down on tab list
+Ent = find()            # To change which player change to findResult(Number on tab)
+
+
+if(Start) {
+    Ent:setTrails(10,1,3,"trails/smoke",vec(255,255,255),255) 
+}
+
+if(Stop) {
+    Ent:removeTrails()
+}

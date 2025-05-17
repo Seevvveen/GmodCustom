@@ -1,0 +1,110 @@
+@name 
+@inputs 
+@outputs 
+@persist Entity:entity D
+@trigger 
+@strict
+
+if(first()){
+    Entity = entity()
+    
+    function number getTriangleSideLength(A, B, C){
+        return acos((A ^ 2 + B ^ 2 - C ^ 2) / ( 2 * A * B ))  
+    }
+    
+    function number arcCosine(A, B, C) { 
+        return acos((C ^ 2 + B ^ 2 - A ^ 2) / (2 * B * C))
+    }
+    
+    function number getSegmentsLength(From, To) {
+        return holoEntity(From):pos():distance(holoEntity(To):pos())
+    }
+    
+    function void generateInverseKinematic3Joints(SegmentA, SegmentB, SegmentC, FinalPosition:vector) {
+        local LGU = getSegmentsLength(SegmentA, SegmentB)                    
+        local LGL = getSegmentsLength(SegmentB, SegmentC)
+        
+        local RotateAroundAxis = Entity:toLocalAxis(FinalPosition - holoEntity(SegmentA):pos())                                  
+        local ConvertToAngle = RotateAroundAxis:toAngle()
+        local LinearInterpolation = min(RotateAroundAxis:length(), LGU + LGL - 0.01)     
+           
+        local Ranger = rangerOffset(100, holoEntity(D):pos(), vec(0, 0, -1))
+        local GetGA = Ranger:hitNormal():cross(Entity:forward():normalized():cross( Ranger:hitNormal()))      
+                   
+        local FinalGA = slerp(quat(GetGA:toAngle()), quat(Entity), _PI / (_PHI ^ 3.5)):toAngle()
+        local GetP = getTriangleSideLength(LinearInterpolation, LGU, LGL )
+                                
+        local RotationXYZ = quat( ConvertToAngle:setRoll(ConvertToAngle:yaw() + 180)) * qRotation(vec(0, -1, 0), GetP - 90)        
+        local GetP2 = getTriangleSideLength(LGU, LGL, LinearInterpolation)
+ 
+        holoAng(SegmentA, Entity:toWorld(RotationXYZ:toAngle()))
+        
+        holoAng(SegmentB, holoEntity(SegmentA):toWorld(ang(clamp(-GetP2 + 180, -150, 200), 0, 0)))
+                
+        # not mandatory but its better to match the feet angle with the ground directly in the inverse kinematic
+        # finally matching it using the animations ranger which is more accurate, therefore we disable this
+        #holoAng( SegmentC, GetGA:toAngle() )
+        
+    }
+    
+    function number absoluteValue(X:number){
+        return abs(X) 
+    } 
+     
+    # 4 joints 3 segments
+    function void xgenerateInverseKinematic4Joints(EndP:vector, D, C, B, A) { 
+        ReturnAbsAverage = sqrt(50)
+        ReturnAbs1 = absoluteValue(Entity:toLocal( holoEntity(A):pos() ):y()) 
+        ReturnAbs2 = absoluteValue(holoEntity(A):toLocal(holoEntity(B):pos()):x())
+        ReturnAbs3 = absoluteValue(holoEntity(B):toLocal(holoEntity(C):pos()):x())  
+        ReturnAbs4 = absoluteValue(holoEntity(C):toLocal(holoEntity(D):pos()):x())
+        
+        ReturnCalc = ReturnAbs4 + ReturnAbsAverage * (1 / 2)  
+        DiffP = Entity:toLocalAxis(EndP - holoEntity(A):pos())
+        
+        Tang = DiffP:toAngle():setRoll(atan(DiffP[10%4], DiffP[9%4]))                    
+        DiffLocal = holoEntity(A):toLocalAxis(EndP - holoEntity(B):pos())
+    
+        Max = min( DiffLocal:length(), abs(holoEntity(B):toLocal(holoEntity(C):pos()):x()) + ReturnCalc ) 
+
+        holoAng(A, Entity:toWorld(Tang:rotateAroundAxis(Tang:right(), (1 - min(1, DiffP:length() / (abs(holoEntity(A):toLocal(holoEntity(B):pos()):x() ) + abs(holoEntity(B):toLocal(holoEntity(C):pos()):x())) - 0.5)) * 90)))    
+    
+        holoAng(B, holoEntity(A):toWorld(ang(atan(-DiffLocal[11%4], DiffLocal[9%4]) + acos((Max^2 + abs(holoEntity(B):toLocal(holoEntity(C):pos()):x())^2 - ReturnCalc^2) / (10%4 * abs(holoEntity(B):toLocal(holoEntity(C):pos()):x()) * Max)), 0, 0)))
+        
+        holoAng(C, holoEntity(B):toWorld(ang(acos((ReturnCalc^2 + abs(holoEntity(B):toLocal(holoEntity(C):pos()):x())^2 - Max^2) / ( 2 * abs(holoEntity(B):toLocal(holoEntity(C):pos()):x()) * ReturnCalc)) + 180,0,0)))
+    }
+     
+    function number returnAbsoluteValueZLength(B1:entity,B2:vector) { 
+        return abs(B1:toLocal(B2):z()) 
+    }
+    
+    function void entity:generateFinalIK4S3(A, B, C, D, End:vector, IkRotationPlus, YawRot) {
+        #hip calc#
+        local L1 = returnAbsoluteValueZLength(holoEntity(A),holoEntity(B):pos())
+        local L2 = returnAbsoluteValueZLength(holoEntity(B),holoEntity(C):pos())    
+        local L3 = returnAbsoluteValueZLength(holoEntity(C),holoEntity(D):pos())
+    
+    
+        if(holoEntity(A)){
+            local AxisA = entity():toLocalAxis(End-holoEntity(A):pos())
+            local Roll = AxisA:toAngle():setRoll(AxisA:toAngle():yaw()+180+YawRot)
+            local HipRotation =  (L1 + L2 + L3 + IkRotationPlus) - abs(min(AxisA:length(), L1+L2+L3+IkRotationPlus))
+            local Quat = quat(Roll) * qRotation(vec(0, 90 + HipRotation, 0))
+        
+            holoAng(A,entity():toWorld(Quat:toAngle()))
+        }
+        ##########
+    
+        #lower parts calc
+        if(holoEntity(B) & holoEntity(C)){
+            local AxisB = holoEntity(A):toLocalAxis(holoEntity(B):pos()-End)
+            local Dist = (holoEntity(B):pos()-End)
+            local LengthB = min(Dist:length(), L2+L3)
+            local KneeAnkleRotation = arcCosine(L2, L3, LengthB)
+            local PitchRotation = AxisB:toAngle():pitch()
+    
+            holoAng(B,holoEntity(A):toWorld(ang(-90+PitchRotation-KneeAnkleRotation, 0, 0)))
+            holoAng(C,holoEntity(B):toWorld(ang(180-holoEntity(B):elevation(End)*2, 0, 0)))     
+        }
+    }
+}

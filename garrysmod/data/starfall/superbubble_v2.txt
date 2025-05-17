@@ -1,0 +1,162 @@
+--@name
+--@author
+--@shared
+
+if SERVER then
+    
+    local BASE = chip()
+    BASE:setMass(50000)
+    local Shell = "models/hunter/misc/shell2x2.mdl"
+    local HoloSphere = "models/holograms/icosphere3.mdl"
+    local Whitelist = {
+        owner(),
+    }
+    local PropSheild = nil
+    local COLORS = {
+        Red = Color(255,0,0,255),
+        Green = Color(0,255,0,255),
+        Gray = Color(35,35,35,255),
+    }
+    local HoloScale = Vector(50)
+
+    local BubbleOuter = hologram.create(BASE:getPos(), BASE:getAngles(), HoloSphere, HoloScale)
+    BubbleOuter:setMaterial("models/wireframe")
+    BubbleOuter:setColor(COLORS.Gray)
+    
+    local BubbleInner = hologram.create(BASE:getPos(), BASE:getAngles(), HoloSphere, -HoloScale)
+    BubbleInner:setMaterial("models/wireframe")
+    BubbleInner:setColor(COLORS.Gray)
+    
+    local function addToWhitelist(PlyToWhitelist, casing, exact)
+        local casing = casing or false
+        local exact = exact or false
+        
+        if type(PlyToWhitelist) == "Player" then
+            PlyToWhitelist = PlyToWhitelist:getName()
+        end
+
+        local Found = find.playersByName(PlyToWhitelist, casing, exact)
+        if Found[1] == nil then return print(COLORS.Red,"cannot find "..PlyToWhitelist) end
+        for _, V in ipairs(Found) do
+            print(COLORS.Green,V:getName().." added to whitelist")
+            table.insert(Whitelist,V)
+        end
+    end
+
+    // RESPAWNING
+    local deathWatchList = {}
+    hook.add("PlayerDeath","",function(ply,inflictor,attacker)
+        if table.hasValue(Whitelist,ply) then
+            deathWatchList[ply:getSteamID()] = {
+                ply:getPos(),
+                ply:getEyeAngles(),
+            }
+            table.add(deathWatchList,deathWatchList[ply:getName()])
+            //printTable(deathWatchList)
+        end   
+    end)
+    
+    hook.add("PlayerSpawn","",function(ply)
+        local Index = ply:getSteamID()
+        local Keys = table.getKeys(deathWatchList)
+        
+        for _, V in ipairs(Keys) do
+            if V == Index then
+                if timer.exists(Index) then return end
+                timer.create(Index, 0.05, 1, function()
+                    ply:setPos(deathWatchList[Index][1])
+                    ply:setEyeAngles(deathWatchList[Index][2])
+                end)
+            end
+        end
+    end)
+    
+    // THIS IS BROKEY
+    local PropsBubble = {}
+    prop.setPropClean(true)
+    local function summonProps()
+        local PropQue = 0
+
+        
+        local function SphereCalc(num_points,radius)
+            local GR = (math.sqrt(5) + 1) / 2
+            local GA = (2 - GR) * (2 * math.pi)
+            local vectors = {}
+        
+            for i = 1, num_points do
+                local lat = math.asin(-1 + 2 * i / (num_points + 1))
+                local lon = GA * i
+        
+                local x = math.cos(lon) * math.cos(lat)
+                local y = math.sin(lon) * math.cos(lat)
+                local z = math.sin(lat)
+        
+                table.insert(vectors, Vector(x, y, z)*radius)
+            end
+        
+            return vectors
+        end
+        local SpherePoints = SphereCalc(125,650)
+        
+        
+        for I, V in ipairs(SpherePoints) do
+            PropQue = PropQue + 1
+            
+        end
+    
+        --- ITS FUCKING THIS PICE OF SHIT
+        while PropQue > 0 and prop.canSpawn() do
+            local stupid = prop.create(chip():getPos() + SpherePoints[#PropsBubble+1], BASE:getAngles(), "models/hunter/blocks/cube8x8x025.mdl",1)
+            local AngleVec = stupid:getPos() - chip():getPos()
+            stupid:setParent(BASE)
+            stupid:setAngles(AngleVec:getAngle()+Angle(90,0,0))
+            stupid:setMaterial("models/props_c17/fisheyelens")
+            PropsBubble[#PropsBubble + 1] = stupid
+            print(PropQue)
+            PropQue = PropQue - 1
+        end
+    end
+    
+    
+    
+    local function removeProps()
+        for _, V in ipairs(PropsBubble) do
+            V:remove()
+        end
+    end
+
+    local function toggleSheild()
+        visable = not visable
+        if visable == true then // Enabled State
+            BubbleOuter:setColor(Color(255,255,255,255))
+            BubbleInner:setColor(Color(255,255,255,255))
+            BASE:emitSound("items/powerup_pickup_regeneration.wav", 75, 100, 1, CHAN_AUTO)
+            summonProps()
+            
+        else // Disabled State
+            BubbleOuter:setColor(Color(255,255,255,0))
+            BubbleInner:setColor(Color(255,255,255,0))
+            BASE:emitSound("items/powerup_pickup_resistance.wav", 75, 100, 1, CHAN_AUTO)
+            removeProps()
+     
+        end
+    end
+    
+    
+    //Server Recevicing Client Inputs
+    net.receive("inputs", function(length,ply)
+        local key = net.readUInt(16)
+        if key == 17 then toggleSheild() end
+    end)
+
+end
+
+
+if CLIENT then
+    if owner() ~= player() then return end
+    hook.add("inputPressed","LEL",function(key)
+        net.start("inputs")
+        net.writeUInt(key,16)
+        net.send()
+    end)
+end

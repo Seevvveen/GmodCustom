@@ -1,0 +1,14 @@
+event tick() {
+    while(perf(100)){ 
+        #[ 
+            so basically perf can only be a number between 0 and 100
+            and what it does is it checks if the e2s tick quota is more than the tick quota limit 
+            it also runs a check if the e2s perf is greater than or equal to the hard quota limit
+            if you set perf to 100 then itll check if the e2s limit is greater than or equal to the soft limit * 2
+            if its less than 99 then itll only check up to the limit you set
+            
+            TOO LONG DIDNT READ: IT RUNS CHECKS FOR THE SOFT AND HARD QUOTA LIMIT
+            IF IT HITS THOSE LIMITS, RETURN 0, IF NOT THEN RETURN 1
+        ]# 
+    }
+}

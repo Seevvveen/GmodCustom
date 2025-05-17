@@ -1,0 +1,38 @@
+#
+#Any text that comes after a # while be commented, This grayed out text will not run in the code and is useful for explaining parts of the code
+#
+
+@name Introduction to Wiremod 1
+#@name refers the to the name of the chip itself, Shown when hovering over the chip ingame and when saving the file
+
+@inputs 
+#These are varibles that go INTO the chip
+
+@outputs 
+#These are varibles that LEAVE the chip
+
+@persist 
+#These are just varibles, These cant be inputed or outputed, only operates withen the chip
+
+@trigger D
+#Set Varibles that will trigger the execution of the chip, in this case the code will trigger anytime varible D changes
+ 
+
+#                   THINGS TO KNOW
+#
+# - This pack was built as I am learning E2 Myself 
+# - This information does not come from someone fulent and the comments written come from the time of learning
+# - While this chip does not include direct code other chips will and will and be explained through comments
+# - The tutorials I am following can be found at - https://www.youtube.com/playlist?list=PLybcAdqge0VtCJ7vbgBwDCVlM743YGd2J
+# - It is HIGHLY recommended that these chip ASSIST the video lessons and are not ment to be learned from on their own
+# - Tutorial credit goes to Omni Games found at - https://www.youtube.com/c/OmniGamesX
+#
+#
+# - The green bar at the bottom of the E2 window is a Validator, You click it and will check to see if there are any errors in your code
+#     - To see it in action uncomment something and click the bar, This will provide you with the errors in the code.
+
+
+# - A varible must alawys start with a captial letter
+# - Code does NOT start with a capital letter
+
+

@@ -1,0 +1,221 @@
+@persist [SwordData Sword2Data SWTransmutationQueue StaticSwords]:array [Swords AllSwordHolos TempSwords SwordTraps]:table Seconds
+#include "libraries/multi-holo"
+if(first()){    
+    
+    SwordData = array(
+        "models/holograms/hq_rcylinder.mdl",
+        "models/holograms/hq_rcube.mdl",
+        "models/holograms/hq_rcylinder.mdl",
+        "models/props_wasteland/buoy01.mdl",
+        "models/holograms/prism.mdl",
+        "models/holograms/prism.mdl",
+        "models/holograms/tetra.mdl",
+        "models/holograms/tetra.mdl",
+        
+        "phoenix_storms/car_tire",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        
+        vec(0.227,0.227,2.272),
+        vec(0.215,1.363,0.454),
+        vec(0.272,0.272,0.318),
+        vec(0.068,0.068,0.045),
+        vec(1.2,6,0.15),
+        vec(1.2,6,0.15),
+        vec(0.18,1.2,1.81),
+        vec(0.18,1.2,1.81),
+        
+        vec(0,41.363,0),
+        vec(0,26.591,0),
+        vec(0,26.591,0),
+        vec(0,54.54,0),
+        vec(0,-12,0.92),
+        vec(0,-12,-0.92),
+        vec(0,-58.85,0.4),
+        vec(0,-58.85,-0.4),
+        
+        ang(90,90,0),
+        ang(90,-90,0),
+        ang(0,-90,0),
+        ang(90,-90,0),
+        ang(0,0,0),
+        ang(180,0,0),
+        ang(92,-90,0),
+        ang(-92,-90,180),
+        
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        
+        0,0,0,0,0,0,0,0
+    )
+    
+    SwordData[0,number] = 8
+    
+    Sword2Data = array(
+        "models/holograms/hq_rcylinder.mdl",
+        "models/props_c17/playground_swingset_seat01a.mdl",
+        "models/props_c17/playground_swingset_seat01a.mdl",
+        "models/props_wasteland/buoy01.mdl",
+        "models/holograms/prism.mdl",
+        "models/holograms/prism.mdl",
+        "models/holograms/tetra.mdl",
+        "models/holograms/tetra.mdl",
+        
+        "phoenix_storms/car_tire",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        "models/gibs/metalgibs/metal_gibs",
+        
+        vec(0.2,0.2,3.272),
+        vec(0.75,0.35,1.0),
+        vec(0.35,0.35,1.0),
+        vec(0.068,0.068,0.045),
+        vec(0.4,6,0.15),
+        vec(0.4,6,0.15),
+        vec(0.18,0.4,0.81),
+        vec(0.18,0.4,0.81),
+        
+        vec(0,45.363,0),
+        vec(0,40,0),
+        vec(0,28,0),
+        vec(0,64.54,0),
+        vec(0,-10,0.92),
+        vec(0,-10,-0.92),
+        vec(0,-50.5,0.4),
+        vec(0,-50.5,-0.4),
+        
+        ang(90,90,0),
+        ang(0,0,90),
+        ang(0,0,90),
+        ang(90,-90,0),
+        ang(0,0,0),
+        ang(180,0,0),
+        ang(92,-90,0),
+        ang(-92,-90,180),
+        
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        
+        0,0,0,0,0,0,0,0
+    )
+    
+    Sword2Data[0,number] = 8
+    
+    SWTransmutationQueue = array()
+    StaticSwords = array()
+    
+    Swords = table()
+    SwordTraps = table()
+    TempSwords = table()
+    AllSwordHolos = table(SwordData, Sword2Data)
+    
+    Seconds = 0
+    
+    function void transmuteSword(Entity:entity){
+        SWTransmutationQueue:pushEntity(Entity)
+    }
+
+    function void createStaticSword(Pos:vector){
+        local StaticSword = propSpawn("models/hunter/plates/plate05x2.mdl",Pos,owner():toWorld(ang(0,-90,0)),1)
+        transmuteSword(StaticSword)
+        StaticSwords:pushEntity(StaticSword)
+    }
+    
+    function void createSwordTrap(Pos:vector, Ang:angle){
+        DesiredAngle = Ang
+        local TrapSword = propSpawn("models/props_c17/TrapPropeller_Blade.mdl",Pos,0)
+        TrapSword:propMakePersistent(1)
+        TrapSword:setMass(50000)
+        transmuteSword(TrapSword)
+        SwordTraps:pushArray(array(TrapSword,DesiredAngle))
+    }
+
+    function void swordFunctionality(Fire:number, HitPos:vector){
+        if(SWTransmutationQueue:count() > 0 & holoRemainingSpawns() > 8){
+            if(SWTransmutationQueue[1,entity]:isValid()){
+                local HoloArray = multiHolo(SWTransmutationQueue[1,entity],AllSwordHolos[randint(AllSwordHolos:count()),array])
+                
+                Swords:pushTable(table(SWTransmutationQueue[1,entity],HoloArray))
+                SWTransmutationQueue[1,entity]:setAlpha(0)
+            }
+            SWTransmutationQueue:remove(1)
+        }   
+
+        ########################## Static Swords
+
+        for(I=1,StaticSwords:count()){
+            local CurrSword = StaticSwords[I,entity]
+
+            if(!CurrSword:isValid()){
+                StaticSwords:remove(I)
+            }
+                    
+            local SwordPos = CurrSword:pos()
+                    
+            local TX = -elevation(SwordPos,ang(0,0,0),HitPos)
+            local TY = -(bearing(SwordPos,ang(0,-90,0),HitPos))
+
+            CurrSword:setAng(ang(0,TY,TX))
+
+            if(Fire){
+                local Invert = randint(0,1) ? -1 : 1
+                CurrSword:propNotSolid(0)
+                CurrSword:propFreeze(0)
+                CurrSword:applyForce(CurrSword:right()*CurrSword:mass()*3500)
+                CurrSword:applyTorque(vec(0,0,9000000*Invert))
+                
+                TempSwords:pushArray(array(CurrSword,Seconds+10))
+                StaticSwords:remove(I)        
+            }
+        }
+        
+        ######################### #[ Sword Traps
+        #[
+        for(I=1,SwordTraps:count()){
+            local CurrTrap = SwordTraps[I,table][1,entity]
+            E = entity()
+            local SpawnAngle = SwordTraps[I,table][2,angle]
+            
+            if(!CurrTrap:isValid()){
+                SwordTraps:remove(I)
+            }
+            
+            Pos = entity():toWorld(vec(0,0,40))-CurrTrap:pos()
+            CurrTrap:applyForce((Pos*10-CurrTrap:vel())*CurrTrap:mass())
+            
+            local Spin = systime()*100
+
+            local RotQuatVec = sin(Spin)*E:up()
+            local RotQuat = quat(cos(Spin),RotQuatVec:x(),RotQuatVec:y(),RotQuatVec:z())
+            local PitchQuatVec = sin(-90/2)*E:right()
+            local PitchQuat = quat(cos(-90/2),PitchQuatVec:x(),PitchQuatVec:y(),PitchQuatVec:z())
+            
+            local IcicleAng = PitchQuat*RotQuat*quat(E)
+            CurrTrap:setAng(IcicleAng:toAngle())
+
+            #CurrTrap:applyAngForce(((IcicleAng:toAngle()) * CurrTrap:mass()))
+        }
+        ]#
+    }
+}

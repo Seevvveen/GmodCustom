@@ -1,0 +1,45 @@
+@name Findlib
+@inputs 
+@outputs MutipleFind:array SingleFind:entity
+@persist 
+@trigger 
+
+#----HELP----#
+#
+#Both Functions have inputs (Array, Center Vector, Radius)
+#
+#FindAroundSingle will return a single entity within the specified range
+#FindAroundMutiple Will return a array of everyone found in the range
+#
+
+
+function entity findAroundSingle(Array:array,Center:vector,Radius:number) {
+        Radius = Radius * Radius
+        local Closest = noentity()
+
+        foreach(K,V:entity = Array){
+            local Dist = Center:distance2(V:pos())
+            
+            if(Dist < Center:distance2(Closest:pos()) & Dist < Radius & V:isAlive() & V:isValid() & Closest != V){
+                Closest = V
+            }
+        
+        }
+        return Closest
+}
+
+
+function array findAroundMutiple(Array:array,Center:vector,Radius:number) {
+        Radius = Radius * Radius
+        local ReturnArray = array()
+
+        foreach(K,V:entity = Array){
+            local Dist = Center:distance2(V:pos())
+            
+            if(Dist < Radius & V:isAlive() & V:isValid() & ReturnArray:getIndex(V) < 1 ){
+                ReturnArray:pushEntity(V)
+            }
+        }
+        return ReturnArray
+}
+

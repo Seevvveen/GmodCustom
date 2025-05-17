@@ -1,0 +1,156 @@
+--@name Screen Drawing
+--@author
+--@shared
+
+-- ORTHO RENDERVIEW SUCKS ASS SO TO ALIGN GMOD MUST BE FULL SCREEN
+-- Place chip on screen to start
+
+if SERVER then
+    --ScreenAutoLink
+    local pChip = chip()
+    local Screen = pChip:isWeldedTo()
+    Screen:linkComponent(pChip)
+    
+    --Getting World info
+    local WorldEnt = game.getWorld()
+    local WorldMin = WorldEnt:getInternalVariable("m_WorldMins")
+    local WorldMax = WorldEnt:getInternalVariable("m_WorldMaxs")
+    local WorldCenter = (WorldMin + WorldMax) / 2
+    
+    --Send World Info to Clients
+    hook.add("ClientInitialized", "sendWorldSize", function(pl)
+        net.start("WorldInfo")
+        net.writeTable({ min = WorldMin,
+                         max = WorldMax,
+                         center = WorldCenter
+                        })
+        net.send(pl)
+    end)
+    
+
+    --Used to take screen position and remap to actual map position
+    --local NewCursorX = math.remap(CursorX, 0, 512, WorldMin[1], WorldMax[1])
+    --local NewCursorY = math.remap(CursorY, 0, 512, WorldMax[2], WorldMin[2])
+
+    wire.adjustPorts({Launcher="entity"},{Targeted="entity"})
+    
+end
+
+
+if CLIENT then
+    
+    -- Client Recives World Info
+    net.receive("WorldInfo", function()
+        -- Assign the table to worldData
+        local worldData = net.readTable()
+        -- pull each index from the table and assign to varibles
+        local WorldMin, WorldMax, WorldCenter = worldData.min, worldData.max, worldData.center
+        
+        -- Get the Size of the Map
+        local worldSize = WorldMin:getDistance(WorldMax)
+        
+        local ortho = {
+            left = -math.max(WorldMax[1], math.abs(WorldMin[1])),
+            right = math.max(WorldMax[1], math.abs(WorldMin[1])),
+            top = -math.max(WorldMax[2], math.abs(WorldMin[2])),
+            bottom = math.max(WorldMax[2], math.abs(WorldMin[2]))
+        }
+        
+        render.createRenderTarget("MapRT")
+        local worldMat = material.create("gmodscreenspace")
+        worldMat:setTextureRenderTarget("$basetexture", "MapRT")
+        
+        
+        function RenderMap()
+            --Render Hook
+            hook.add("renderscene", "renderWorld", function()
+                --Instantly Removes hooks so it only runs once
+                hook.remove("renderscene", "renderWorld")
+                
+                --Set RenderLib to target the Material created ealier
+                render.selectRenderTarget("MapRT")
+                -- Clear any previous render stuff
+                render.clear()
+                
+                --Ortho render View
+                render.renderView({
+                    angles = Angle(90,-90,180), 
+                    origin = WorldCenter,
+                    ortho = ortho,
+                    znear = 0,
+                    zfar = 69420
+                })
+                -- Set the rendertarget to null
+                render.selectRenderTarget()
+            end)
+        end
+        RenderMap()
+        timer.create("RenderRep", 10, 0, RenderMap)
+        
+        
+        hook.add("render", "asd", function()
+            --set RenderLib to use worldMat            
+            render.setMaterial(worldMat)
+            render.drawTexturedRect(0, 0, 512, 512)
+            
+
+            local x,y
+            local r = 5
+            local isHovered
+            
+            for K, V in ipairs(find.allPlayers()) do
+                
+                
+            
+                
+                --Init Varibles
+                local Team = V:getTeam()
+                local TeamColor = team.getColor(Team)
+                local Name = V:getName()
+                
+                --Position Translatinng
+                local POS = V:getPos()
+                local NewX = math.remap(POS.x, WorldMin[1], WorldMax[1], 0, 512)
+                local NewY = math.remap(POS.y, WorldMax[2], WorldMin[2], 0, 512)
+        
+
+                local CursorX, CursorY = render.cursorPos(V, Screen)
+                
+                if !CursorX and !CursorY then
+                    CursorX = 0
+                    CursorY = 0
+                end
+                
+                if CursorX and CursorY then
+                    render.setColor(Color(255))
+                    render.drawCircle(CursorX, CursorY, 5)
+                end
+                
+                x = NewX - CursorX
+                y = NewY - CursorY
+                isHovered = x*x + y*y <= r*r
+                
+                if isHovered then
+                    --print(V)
+                end
+                
+                
+
+
+                
+                -- Death Updater
+                if !V:isAlive() then
+                    render.setColor(Color(255,0,0,175))
+                    Name = "Dead"
+                else
+                    render.setColor(TeamColor)
+                end
+                
+                render.drawFilledCircle(NewX, NewY, 3)
+                render.drawSimpleText(NewX, NewY, Name, 1, 2)
+            end
+        end)
+        
+    end)
+end
+

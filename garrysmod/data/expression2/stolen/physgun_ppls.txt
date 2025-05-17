@@ -1,0 +1,81 @@
+@name Physgun ppls
+@inputs 
+@outputs 
+@persist Data:table O:entity 
+@trigger 
+O=owner()
+event tick()
+{
+#t(O:eyeTrace():entity())
+    foreach(K,V:entity=players())
+    {
+        if(O:eyeTrace():entity()==V&&owner():keyAttack1())
+        {
+            
+            if(!Data["Shit"+K,entity])
+            {
+                Data["Shit"+K,entity]=propSpawn("models/hunter/misc/sphere2x2.mdl",V:pos(),0)
+                Data["Shittemp"+K,entity]=propSpawn("models/hunter/plates/plate.mdl",V:pos(),0)
+                
+                Data["Shit"+K,entity]:setAlpha(0)
+                Data["Shit"+K,entity]:setMass(50000)
+                Data["Held"+K,entity]=V
+                Data["Held"+K,entity]:propDraw(0)
+                holoCreate(K)
+                holoModel(K,Data["Held"+K,entity]:model())
+                holoPos(K,Data["Shittemp"+K,entity]:pos())
+                holoParent(K,Data["Shittemp"+K,entity])
+        
+                
+            }
+            
+            
+        }
+        elseif(Data["Shit"+K,entity]:isValid()&&Data["Shit"+K,entity]:isPlayerHolding())
+        {
+            
+            Data["Held"+K,entity]:plySetPos(Data["Shit"+K,entity]:pos())
+            Data["Held"+K,entity]:plySetAng(Data["Shit"+K,entity]:angles())
+
+        }
+        else
+        {
+            if(Data["Shittemp"+K,entity]:isValid())
+            {
+                Data["Shittemp"+K,entity]:propDelete()
+                
+                timer("del",5000)
+                print("e")
+            }
+            if(Data["Shit"+K,entity]:isValid())
+            {
+                Data["Held"+K,entity]:plySetPos(Data["Shit"+K,entity]:pos())
+                Data["Held"+K,entity]:plySetAng(Data["Shit"+K,entity]:angles())
+                holoAng(K,Data["Shittemp"+K,entity]:angles())
+                
+                if(!Data["Held"+K,entity]:isAlive())
+                {
+                    Data["Held"+K,entity]:plySpawn()
+                }                
+            }
+            #Data["Shittemp"+K,entity]=propSpawn("models/hunter/plates/plate.mdl",V:pos(),0)
+                
+            
+            #Data["Shit"+K,entity]:propDelete()
+            
+        }
+    }
+
+}
+if(clk("del"))
+{
+    foreach(K,V:entity=players())
+    {
+        if(!Data["Shit"+K,entity]:isPlayerHolding())
+        {
+            Data["Shit"+K,entity]:propDelete()   
+            Data["Held"+K,entity]:plySetAng(ang(0))
+        }
+        
+    }
+}

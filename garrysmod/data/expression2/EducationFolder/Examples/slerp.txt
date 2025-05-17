@@ -1,0 +1,26 @@
+@name slerp
+@persist [E]:entity
+@model models/sprops/cuboids/height06/size_1/cube_6x6x6.mdl
+
+if (first()|dupefinished()) {
+    E = entity() 
+    E:setAlpha(0)   
+    
+    holoCreate(1, E:pos(), vec(3,0.2,0.2), E:angles(), vec(255,0,255))
+    holoCreate(2, E:pos(), vec(3,0.1,0.1), E:angles(), vec(0,0,255))
+    holoCreate(3, E:pos(), vec(3,0.1,0.1), E:angles(), vec(255,0,0))
+}
+
+interval(60)
+    
+local AimDirection = quat((owner():aimPos()-E:pos()):toAngle())
+local Default      = quat(E:angles())
+local Anim         = slerp(Default,AimDirection,0.5+0.5*sin(curtime()*100)):toAngle()
+    
+holoPos(2,E:pos())
+holoPos(3,E:pos())
+holoAng(2,AimDirection:toAngle())
+holoAng(3,Default:toAngle())
+    
+holoPos(1, E:pos())
+holoAng(1, Anim)

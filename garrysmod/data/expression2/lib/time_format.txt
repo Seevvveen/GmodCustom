@@ -1,0 +1,26 @@
+@name Time Format Function
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+#Code by Styled Strike
+
+function string timeFormat(Time) {
+    local Ttime = Time
+    local S = Ttime % 60
+
+    Ttime = floor(Ttime / 60)
+    local M = Ttime % 60
+    
+    Ttime = floor(Ttime / 60)
+    local H = Ttime % 24
+
+    Ttime = floor(Ttime / 24)
+    local D = Ttime % 7
+
+    local W = floor(Ttime / 7)
+
+    local Str = (W > 0 ? W + "w " : "") + (D > 0 ? D + "d " : "")
+    return format(Str + "%02ih %02im", H, M, S)
+}

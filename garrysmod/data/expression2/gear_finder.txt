@@ -1,0 +1,38 @@
+@name GEAR FINDER
+@strict
+
+local LastUpdate = 0
+function void main() {
+    local CurTime = curtime()
+    if (CurTime - LastUpdate >= 1) {
+        findByClass("bs_gear_rarity")
+        
+        
+        
+        foreach(_:number, Gear:entity = findToArray()) {
+            if (!Gear:isValid()) {
+                continue
+            }
+            
+            local Pos = Gear:pos()
+            if (Pos == _VECTOR_ORIGIN) {
+                continue
+            }
+
+            local Direction = (Pos - owner():shootPos()):normalized()
+            
+            owner():plySetPos(Pos)
+            owner():plySetAng(Direction:toAngle())
+            
+            if (owner():aimEntity() == Gear) {
+                owner():use()
+            }
+        }
+        
+        LastUpdate = CurTime
+    }
+}
+
+event tick() {
+    main()
+}

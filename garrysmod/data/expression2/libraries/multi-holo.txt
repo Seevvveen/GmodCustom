@@ -1,0 +1,27 @@
+@persist HC
+
+if(first()){
+    HC = 0
+
+    function array multiHolo(Entity:entity, Data:array){
+        local HoloArray = array()
+        local Amt = Data[0, number]
+        
+        for(I = 1, Amt){
+            HC++
+            Holo = holoCreate(HC)
+            HoloArray[I, entity] = Holo
+            
+            holoParent(HC, Entity)
+            holoModel(HC, Data[I,string])
+            holoMaterial(HC, Data[I+Amt,string])
+            holoScale(HC, Data[I+Amt*2,vector])
+            holoPos(HC, Entity:toWorld(Data[I+Amt*3,vector]))
+            holoAng(HC, Entity:toWorld(Data[I+Amt*4,angle]))
+            holoColor(HC, Data[I+Amt*5,vector4])
+            holoDisableShading(HC, Data[I+Amt*6,number])
+        }
+
+        return HoloArray
+    }
+}

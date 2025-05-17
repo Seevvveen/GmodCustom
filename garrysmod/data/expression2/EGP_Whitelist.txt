@@ -1,0 +1,74 @@
+@name EGP Whitelist
+@inputs EGP:wirelink
+@outputs Whitelist:array
+@persist IDWhitelist:table
+@trigger 
+@strict
+
+if((first() || duped() || ~EGP) && ->EGP){
+    Whitelist = array()
+    Whitelist[1, entity] = owner()
+    IDWhitelist = table()
+    IDWhitelist[owner():steamID(), number] = 1
+    
+    function redraw(){
+        EGP:egpClear()
+        foreach(I, Ply:entity = players()){
+            local State = vec4(255, 0, 0, 255)
+            foreach(_, WhitelistedPly:entity = Whitelist){
+                if(Ply == WhitelistedPly){
+                    State = vec4(0, 255, 0, 255)
+                    break
+                }
+            }
+            
+            EGP:egpBox(I * 2 - 1, vec2(256, (I - 1) * 18 + 9), vec2(512, 18))
+            EGP:egpColor(I * 2 - 1, vec4(100 + I % 2 * 50, 100 + I % 2 * 50, 100 + I % 2 * 50, 255))
+            EGP:egpText(I * 2, Ply:name(), vec2(10, (I - 1) * 18))
+            EGP:egpColor(I * 2, State)
+        }
+    }
+    
+    redraw()
+}
+
+event playerSpawn(Player:entity){
+    if(IDWhitelist[Player:steamID(), number] == 1){
+        Whitelist:pushEntity(Player)
+    }
+    redraw()
+}
+
+event playerDisconnected(_:entity){
+    redraw()
+}
+
+event keyPressed(Ply:entity, _:string, Dir:number, Action:string){
+    if(Ply == owner() && Dir == 1 && Action == "use"){
+        local Pos = EGP:egpCursor(Ply)
+        if(Pos:x() != -1){
+            local I = floor(Pos:y() / 18 + 1)
+            local PlyTbl = players()
+            if(I <= PlyTbl:count()){
+                local Player = PlyTbl[I, entity]
+                if(Player != owner()){
+                    local Whitelisted = 0
+                    foreach(Num, WhitelistedPly:entity = Whitelist){
+                        if(Player == WhitelistedPly){
+                            Whitelisted = Num
+                            break
+                        }
+                    }
+                    if(Whitelisted){
+                        Whitelist:removeEntity(Whitelisted)
+                        IDWhitelist:remove(Player:steamID())
+                    }else{
+                        Whitelist:pushEntity(Player)
+                        IDWhitelist[Player:steamID(), number] = 1
+                    }
+                    redraw()
+                }
+            }
+        }
+    }
+}

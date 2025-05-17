@@ -1,0 +1,41 @@
+@name 5B Entities - Key and Conditional Functions
+@inputs 
+@outputs Fire
+@persist Ent:entity RGB:vector Ang:angle Vec:vector
+@trigger 
+
+#if(first()|duped()){
+#    Ent = owner()
+#    RGB = vec(255,0,0)
+#}                        #
+#                         ## RFB lamp that changes when attacking
+#interval(500)            #
+#
+#if(Ent:keyAttack1()) {
+#    RGB = shiftR(RGB)
+#}
+
+
+#########################################################
+#Code from 4e                                           #
+runOnTick(1)                                            #
+findByModel("models/hunter/blocks/cube05x05x05.mdl")    #
+Ent = findResult(1)                                     #
+Vec = (entity():pos() - Ent:pos() + vec(0,0,65))*80     ##
+Ent:applyForce(Vec+$Vec*5)                              ### This box makes a 2x2 Plastic Square hover over the E2 Chip and look where the owner is pointing
+Pitch = Ent:elevation(owner():aimPos())                 ##
+Yaw = Ent:bearing(owner():aimPos())                     #
+Roll = Ent:angles():roll()                              #
+Ang = (-ang(Pitch,Yaw,Roll))*80                         #
+Ent:applyAngForce(Ang+$Ang*5)                           #
+#########################################################
+
+#turret module
+if(owner():keyAttack1()){
+    Fire = 1
+}
+else {
+    Fire = 0
+}
+
+

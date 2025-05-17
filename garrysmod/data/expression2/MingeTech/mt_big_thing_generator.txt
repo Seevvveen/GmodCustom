@@ -1,0 +1,31 @@
+@name 
+@persist HolosSpawned HoloCount Sounds:array
+
+if( first() ){
+    HoloCount = 128
+    runOnTick(1)
+}
+
+if(HolosSpawned<HoloCount){
+    HolosSpawned++
+    holoCreate(HolosSpawned)
+    holoPos(HolosSpawned,entity():pos())
+    holoModel(HolosSpawned,"models/dog.mdl")
+    holoParent(HolosSpawned,entity())
+    holoAng(HolosSpawned,ang(HolosSpawned*0.1))
+    holoEntity(HolosSpawned):setSubMaterial(1,"models/alyx/emptool_glow")
+    holoMaterial(HolosSpawned,"hlmv/debugmrmwireframe")
+    holoColor(HolosSpawned,hsv2rgb(360*HolosSpawned/HoloCount,1,1))
+    holoAlpha(HolosSpawned,min(2*(1-HolosSpawned/HoloCount),1)*255)
+    holoScale(HolosSpawned,vec(100))
+    for(I=0,5){
+        holoBoneScale(HolosSpawned,I,vec(10)*(HolosSpawned/HoloCount))    
+    }
+    for(I=6,9){
+        holoBoneScale(HolosSpawned,I,vec(0))    
+    }
+    
+}
+else{
+    runOnTick(0)
+}

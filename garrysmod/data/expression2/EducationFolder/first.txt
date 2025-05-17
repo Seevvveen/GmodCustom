@@ -1,0 +1,37 @@
+@name E2Wiki - Constant_Speed
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+if(first()|duped()){
+    findByModel("models/hunter/blocks/cube075x075x075.mdl")   #3x3 builders cube 
+    Prop = find()  
+    
+    DesiredSpeed = 80 
+}
+
+
+
+
+
+event tick(){
+    DesiredPos = entity():pos() + vec(0,0,50)
+    
+    # Detailed version
+    Difference = DesiredPos - Prop:pos()
+    Distance = Difference:length()
+    TargetVel = Difference * min(DesiredSpeed/Distance, 1)
+   
+    #Code from E2Wiki-Fluid_Movement
+    Acceleration = TargetVel-Prop:vel()
+    AntiGravity = propGravity()*-1*tickInterval()
+    
+    Prop:applyForce( (Acceleration+AntiGravity)*Prop:mass() )
+
+}
+
+
+#[ Compact version:
+Diff = DesiredPos - Prop:pos()
+Prop:applyForce((Diff * min(DesiredSpeed/Diff:length(), 1) - Prop:vel() - propGravity() * tickInterval()) * Prop:mass())

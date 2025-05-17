@@ -1,0 +1,194 @@
+@name CumBackSeven
+@inputs 
+@outputs
+@persist [LockSpawn Spawnpoint Respawn CustomSpawn I I2 Random]:number [SpawnPosition Pos HoloColor SpawnpointColor]:vector [SpawnRotation Rot]:angle SpawnLocationList:array O:entity  
+@trigger 
+
+# Ideas
+# Spawn animations?
+
+
+interval(50)
+Opos = owner():pos()
+runOnChat(1)
+
+
+#[
+!gt - Simple Goto Command
+!addspawn - Save Current position as spawnpoint
+!Spawnpoint (number) - Sets spawnpoint to whatever number specfied
+!random - Randomly selects spawnpoint from list
+!list - List all avalible spawnpoints
+]#
+
+
+
+if(first()){
+
+    #Hide the Chip
+    entity():setAlpha(1)
+    entity():setMass(inf())
+    
+    #replace this chip with holo only visable to owner
+    holoCreate(1000)
+    holoModel(1000, "models/beer/wiremod/gate_e2.mdl")
+    holoVisible(1000,players(),0)
+    holoVisible(1000,owner(),1)
+    
+    #For goto Command
+    findClearBlackList()
+    findClearWhiteList()
+    findExcludePlayer(owner():name())
+    findByClass("player")
+    
+    #Set Incriment to zero
+    I = 0
+    
+    #Respawn Mechanics
+    Respawn = 0
+    LockSpawn = 0
+    O = owner()
+    
+    
+    #Main Print To Chat
+    printColor(vec(255,255,255),"-----------------------------------------------")
+    printColor(vec(255,255,255),"The CumBack Chip is Loaded")
+    printColor(vec(255,255,255),"-----------------------------------------------")
+    printColor(vec(255,255,255),"- Created by Seven")
+    
+}
+#### CHAT COMMANDS ####
+#Hides Commands from chat
+if(chatClk(owner()) && owner():lastSaid():lower()[1] == "!"){
+    OwnerLastSaid = owner():lastSaid():explode(" ")
+    hideChat(1)
+    printColor(vec(100,100,100),owner():lastSaid())
+}
+
+
+switch(OwnerLastSaid[1,string]){
+
+    case "!addspawn",
+    I = I+1
+    SpawnLocationList[I,vector] = Opos
+    HoloColor = randvec(0,255)
+    
+    printColor(HoloColor,"---Spawn Location Added")
+    
+    holoCreate(I)
+    holoPos(I,Opos)
+    holoModel(I,"models/hunter/misc/squarecap1x1x1.mdl")
+    holoScale(I,vec(0.5,0.5,0.5))
+    holoMaterial(I,"models/debug/debugwhite")
+    holoColor(I,HoloColor)
+    holoVisible(I,players(),0)
+    holoVisible(I,owner(),1)
+    holoDisableShading(I,1)
+    OwnerLastSaid:removeString(1)
+    break
+
+
+
+    case "!spawnpoint",
+    if(OwnerLastSaid[2,string]){
+        CustomSpawn = 1
+        Spawnpoint = OwnerLastSaid[2,string]:toNumber()
+
+        SpawnpointColor = holoEntity(OwnerLastSaid[2,string]:toNumber()):getColor()
+
+        printColor(SpawnpointColor,"--- " + floor(SpawnLocationList[OwnerLastSaid[2,string]:toNumber(),vector]):toString())
+        printColor(SpawnpointColor,"--- Respawn Location Set")
+            
+    }
+    OwnerLastSaid:removeString(1)
+    break
+    
+    
+    
+    case "!default",
+    CustomSpawn = 0
+    printColor(vec(255,255,255),"---Default Spawning")
+    OwnerLastSaid:removeString(1)
+    break
+    
+    
+    case "!list",
+    foreach(N:number, Vec:vector = SpawnLocationList){
+    I2 = I2+20
+    printColor(vec(255,45+I2,0+I2),floor(SpawnLocationList[N,vector]):toString())
+    }
+    OwnerLastSaid:removeString(1)
+    break
+    
+    case "!random",
+    CustomSpawn = 1
+    Random = 1 
+    printColor(vec(255,255,255),"--- Spawnpoint is now randomized")
+    OwnerLastSaid:removeString(1)
+    break
+
+    case "!gt",
+    TargetPlayer = findPlayerByName(OwnerLastSaid:string(2))
+    Offset = 100
+    
+    if(OwnerLastSaid:string(3):toNumber()){
+        Offset = OwnerLastSaid:string(3):toNumber()
+    }
+    
+    if(TargetPlayer:isPlayer()){
+        owner():teleport(TargetPlayer:pos() + vec(0,0,Offset))
+    }
+    OwnerLastSaid:removeString(1)
+    break
+    
+    case "!help",
+    print("!addspawn")
+    print("!spawnpoint")
+    print("!default")
+    print("!list")
+    print("!random")
+    print("!gt")
+    break
+
+
+
+}
+
+
+#### Respawn Mechanics ####
+if(owner():isAlive()){
+    if(Respawn == 0){
+        SpawnRotation = owner():eyeAngles()
+        if(CustomSpawn == 1){
+            if(Random == 1){
+                Spawnpoint = randint(1,I)
+                SpawnPosition = SpawnLocationList[Spawnpoint,vector]
+            }
+            else{
+                SpawnPosition = SpawnLocationList[Spawnpoint,vector]
+            }
+            
+            SpawnPosition = SpawnLocationList[Spawnpoint,vector]
+        }
+        elseif(CustomSpawn == 0){
+            SpawnPosition = owner():pos()
+        }
+    }
+    else{
+        O:plySetAng(SpawnRotation)
+        O:plySetPos(SpawnPosition)  
+        
+        
+        if(owner():pos() == SpawnPosition){
+            Respawn = 0
+        }
+    }
+}
+
+else{
+    O:plySpawn()
+    Respawn = 1
+}
+
+
+

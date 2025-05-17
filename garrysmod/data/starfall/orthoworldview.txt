@@ -1,0 +1,69 @@
+--@name
+--@author
+--@shared
+
+
+if SERVER then
+    
+    local world = game.getWorld()
+    local worldMin = world:getInternalVariable("m_WorldMins")
+    local worldMax = world:getInternalVariable("m_WorldMaxs")
+    local worldCenter = (worldMin + worldMax) / 2
+    
+    hook.add("ClientInitialized", "sendWorldSize", function(pl)
+        net.start("WorldSize")
+        net.writeTable({ min = worldMin, max = worldMax, center = worldCenter })
+        net.send(pl)
+    end)
+    
+    if(!wire.ports["WorldMin"]) then
+        wire.adjustOutputs({"WorldMin", "WorldMax", "WorldCenter"}, {"vector", "vector", "vector"})
+    end
+    
+    wire.ports["WorldMin"] = worldMin
+    wire.ports["WorldMax"] = worldMax
+    wire.ports["WorldCenter"] = worldCenter
+else
+    --if player() != owner() then return end
+    
+    net.receive("WorldSize", function()
+        local worldData = net.readTable()
+        local worldMin, worldMax, worldCenter = worldData.min, worldData.max, worldData.center
+        
+        local worldSize = worldMin:getDistance(worldMax)
+        
+        local ortho = {
+            left = -math.max(worldMax[1], math.abs(worldMin[1])),
+            right = math.max(worldMax[1], math.abs(worldMin[1])),
+            top = -math.max(worldMax[2], math.abs(worldMin[2])),
+            bottom = math.max(worldMax[2], math.abs(worldMin[2]))
+        }
+                
+        render.createRenderTarget("MapRT")
+        
+        local worldMat = material.create("gmodscreenspace")
+        worldMat:setTextureRenderTarget("$basetexture", "MapRT")
+        
+        hook.add("renderscene", "renderWorld", function()
+            hook.remove("renderscene", "renderWorld")
+            
+            render.selectRenderTarget("MapRT")
+            render.clear()
+            
+            render.renderView({
+                angles = Angle(90,-90,180), 
+                origin = Vector(worldCenter[1], worldCenter[2], 2000),
+                ortho = ortho,
+                znear = 0,
+                zfar = 6942069
+            })
+            
+            render.selectRenderTarget()
+        end)
+        
+        hook.add("render", "drawWorld", function()            
+            render.setMaterial(worldMat)
+            render.drawTexturedRectFast(0, 0, 512, 512)
+        end)
+    end)
+end

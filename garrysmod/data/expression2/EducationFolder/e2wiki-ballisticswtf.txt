@@ -1,0 +1,59 @@
+@name E2Wiki-BallisticsWTF
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+
+    function vector calcLaunchVector(Start:vector, Target:vector, AddHeight){
+        # Detailed version
+        
+        # Height difference, positive if target is higher than start
+        local TargetHeight = Target:z() - Start:z()
+        
+        # Height at the maximum of the trajectory
+        local PeakHeight = AddHeight + max(TargetHeight,0)
+
+        # first assume we fire straight up, with start being at height 0
+        # Formula for peak height given upwards speed: `h_peak = v^2 / 2g`
+        # Solving for v gives `v = sqrt(2g*h_peak)`
+        local VerticalSpeed = sqrt(2*gravity() * PeakHeight)
+        # This is the vertical speed we need to lauch at to reach the target peak height
+
+        # Formula for distance fallen given starting velocity and elapsed time: `h = v*t - 1/2 * g*t^2`
+        # Solving for t gives `t = (v+sqrt(v^2-2gh))/g`
+        local Airtime = (VerticalSpeed+sqrt(VerticalSpeed^2-2*gravity()*TargetHeight)) / gravity()
+        # This is the time we spend from launching to reaching the *height* of the target, using our vertical launch speed
+        # Note that how far we move horizontally during that time doesn't affect the result, so we can adjust horziontal speed indepentently
+
+        # Now use the airtime to calculate the horizonal launch velocity
+        local HorizontalDiff = vec2(Target - Start) # ignore z axis (height)
+        local HorizontalVel = HorizontalDiff / Airtime # cover the whole horizontal distance during the flight time
+        # This is adjusted to the projectile moves the exact horizontal difference to the target in the time it needs to reach the target height
+        # So after the airtime, both height and horzontal position will be at the target, which means the projectile arrives perfectly 
+
+        # finally combine horizontal speed (2d vector), and vertical speed (1d "vector") into a 3d vector
+        return vec(HorizontalVel, VerticalSpeed)
+        #
+}
+
+
+
+findByModel("models/hunter/blocks/cube075x075x075.mdl")   #3x3 builders cube 
+findIncludePlayerProps("seven")
+Prop = find()  
+
+Height = 20
+
+
+Prop:applyForce(calcLaunchVector(Prop:pos(),entity():pos(),Height)*Prop:mass())
+
+print(calcLaunchVector(Prop:pos(),entity():pos(),Height)) #Calls the Function to calc Launch Vec from owners position to chip position with an added hieght of 20 
+
+
+
+
+        #[Compact version
+        local VerticalSpeed=sqrt(2*gravity()*AddHeight+max(Target:z()-Start:z(),0))
+        return vec(vec2(Target-Start)/(VerticalSpeed+sqrt(VerticalSpeed^2-2*gravity()*(Target:z()-Start:z()))/gravity()), VerticalSpeed)
+

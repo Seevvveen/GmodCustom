@@ -1,0 +1,38 @@
+@name PARTICLE GENERATOR
+@persist A Particles:array
+if(first()) {
+Particles = array(
+"ui/emotes/fartburger.png",
+"ui/emotes/crazy.png",
+"ui/emotes/dog.png",
+"ui/emotes/troll.png",
+"ui/emotes/wedoalil.png",
+"ui/emotes/why.png",
+"flags16/br.png",
+"effects/alyxmonitor_idle",
+"effects/breenscreen_static01_",
+"effects/tp_eyefx/tp_eyefx_eli",
+"thrusteraddon/money1"
+)
+runOnTick(1)
+particleSetMaterial("ui/emotes/fartburger.png")
+particleSetColor(vec(255))
+particleBounce(0)
+particleGravity(vec(0))
+particleSetStartSize(inf())
+particleSetEndSize(inf())
+particleSetEndAlpha(255)
+particleSetStartAlpha(255)
+particleSetPosition(entity():toWorld(vec(0,0,50)))
+particleSetDuration(inf())
+}
+#for(I=1,20) {
+A++
+
+particleSetMaterial(Particles[randint(0,Particles:count()),string])
+particleSetPosition(entity():toWorld(vec(randint(-50,50),randint(-50,50),randint(50,60))))
+particleSetColor(hsv2rgb(A%360,1,1))
+particleCreate()
+particleSetVelocity(vec(randint(-1000,1000),randint(-1000,1000),randint(50,500)))
+#}
+

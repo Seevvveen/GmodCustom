@@ -1,0 +1,240 @@
+#[
+    Area Shield, Created by Katsu
+    Rewritten by StyledStrike
+]#
+
+@name AreaShield
+@model models/props_junk/garbage_plasticbottle003a.mdl
+
+@persist [Owner, Chip, PropShield]:entity
+@persist [Enabled, Radius, KeyEnable, ShieldYaw, OAlive]:number
+@persist ActivationPos:vector Whitelist:table
+
+if (first()) {
+    Owner = owner()
+    Chip = entity()
+    Chip:setAlpha(0)
+    Chip:propFreeze(0)
+    Chip:setMass(50000)
+
+    Enabled = 0
+    Radius = 800
+    ShieldYaw = 0
+    OAlive = Owner:isAlive()
+    PropShield = noentity()
+    Whitelist = table()
+
+    local ChipPos = Chip:pos()
+
+    holoCreate(1, ChipPos, vec(0.5,0.5,1.5), Chip:toWorld(ang(180,0,0)), vec4(255),
+        "models/props_phx/gears/bevel9.mdl")
+    holoMaterial(1, "models/props_vents/borealis_vent001c")
+    holoParent(1, Chip)
+
+    holoCreate(2, ChipPos, vec(0.5,0.5,1.5), Chip:toWorld(ang(0,0,0)), vec4(255),
+        "models/props_phx/gears/bevel9.mdl")
+    holoMaterial(2, "models/props_vents/borealis_vent001c")
+    holoParent(2, Chip)
+
+    holoCreate(3, ChipPos - vec(0,0,2.5), vec(0.07,0.07,0.015), Chip:toWorld(ang(0,0,0)), vec4(255),
+        "models/props_phx/construct/metal_plate_curve360.mdl")
+    holoMaterial(3, "models/props_vents/borealis_vent001c")
+    holoParent(3, Chip)
+
+    holoCreate(4, ChipPos + vec(0,0,2), vec(0.07,0.07,0.015), Chip:toWorld(ang(0,0,0)), vec4(255),
+        "models/props_phx/construct/metal_plate_curve360.mdl")
+    holoMaterial(4, "models/props_vents/borealis_vent001c")
+    holoParent(4, Chip)
+
+    findIncludeClass("prop_physics")
+    propSpawnEffect(1)
+    propSpawnUndo(0)
+    runOnTick(1)
+    runOnLast(1)
+
+    function addPlayerToWhitelist(PlyName:string) {
+        local Ply = findPlayerByName(PlyName)
+        if (Ply:isValid()) {
+            Ply:hintPlayer(Owner:name() + " added you to the whitelist!", 3)
+            Whitelist[Ply:steamID(),number] = 1
+        }
+    }
+
+    function number isPlayerWhitelisted(SteamId:string) {
+        if (SteamId == Owner:steamID()) {
+            return 1
+        }
+
+        return Whitelist:exists(SteamId)
+    }
+    # Make addition that auto adds people to whitelist when i Ulx bring them
+    addPlayerToWhitelist("Zwick2376")
+    addPlayerToWhitelist("captain bacon#PatchTitanfall2")
+    addPlayerToWhitelist("Tooty582")
+
+}
+
+if (tickClk()) {
+    local TickInt = tickInterval()
+
+    if (Owner:isAlive()) {
+        if (OAlive == 0) {
+            OAlive = 1
+            Owner:teleport(ActivationPos)
+        }
+    }
+    else {
+        OAlive = 0
+    }
+
+    KeyEnable = Owner:keyPressed("g")
+
+    if (changed(KeyEnable) & KeyEnable) {
+        if (Enabled == 0) {
+            Enabled = 1
+            print("Area shield enabled!")
+
+            Chip:soundPlay(1, 4, "items/powerup_pickup_regeneration.wav")
+            soundPitch(1, 55)
+
+            Chip:soundPlay(2, 0, "combine.sheild_loop")
+            soundPitch(2, 90)
+            soundVolume(2, 0.5)
+
+            ActivationPos = Chip:pos() + vec(0,0,20)
+
+            # lil sphere on the middle
+            holoCreate(5, ActivationPos, vec(0.64), ang(0,0,0), vec4(255,20,20,180), "sphere")
+            holoMaterial(5, "models/debug/debugwhite")
+            holoDisableShading(5, 1)
+
+            # outer shell
+            holoCreate(6, ActivationPos, vec(1), ang(0,0,0), vec4(255,20,20,130),
+                "models/props_phx/misc/soccerball.mdl")
+            holoMaterial(6, "models/debug/debugwhite")
+            holoDisableShading(6, 1)
+            holoScaleUnits(6, vec(Radius))
+            holoParent(6, 5)
+
+            # inner shell
+            holoCreate(7, ActivationPos, -holoScale(6) + vec(0.2), ang(0,0,0), vec4(255,20,20,130),
+                "models/props_phx/misc/soccerball.mdl")
+            holoMaterial(7, "models/debug/debugwhite")
+            holoDisableShading(7, 1)
+            holoParent(7, 5)
+
+            # reference shell (used to scale the prop with it, needs the same model as the prop)
+            holoCreate(8, ActivationPos, vec(1), ang(0,0,0), vec4(0), "models/hunter/misc/shell2x2.mdl")
+            holoScaleUnits(8, vec(Radius))
+        }
+        else {
+            Enabled = 0
+            print("Area shield disabled!")
+
+            Chip:soundPlay(1, 4, "items/powerup_pickup_resistance.wav")
+            soundPitch(1, 90)
+            soundVolume(1, 0.4)
+
+            soundStop(2)
+            holoDelete(5)
+            holoDelete(6)
+            holoDelete(7)
+            holoDelete(8)
+            Chip:propFreeze(0)
+        }
+    }
+
+    if (Enabled) {
+        if (PropShield:isValid()) {
+            if (!PropShield:isFrozen()) {
+                PropShield:propFreeze(1)
+            }
+            if (!Chip:isFrozen()) {
+                Chip:propFreeze(1)
+                Chip:setPos(ActivationPos)
+                Chip:setAng(ang(0))
+            }
+
+            ShieldYaw = ShieldYaw + TickInt * 10
+            if (ShieldYaw > 360) { ShieldYaw = 0 }
+
+            #[local Cl = hsl2rgb((ShieldYaw * 5) % 360, 1.0, 0.5)
+            holoColor(6, Cl)
+            holoColor(7, Cl)
+            holoColor(5, Cl)]#
+
+            holoAng(5, ang(0, ShieldYaw, 0)) # lil sphere
+            holoAng(1, ang(0, ShieldYaw * -5, 0)) # top bevel
+            holoAng(2, ang(180, ShieldYaw * 5, 0)) # bottom bevel
+        }
+        else {
+            local Scale = holoScale(8):x()
+            PropShield = propSpawn("models/hunter/misc/shell2x2.mdl", Chip:pos(), ang(0), 1)
+            PropShield:setModelScale(Scale)
+            PropShield:setPhysScale(Scale)
+            PropShield:setMass(50000)
+            PropShield:setAlpha(0)
+            PropShield:propMakePersistent(1)
+
+            findExcludeEntity(PropShield)
+        }
+
+        local KeyNuke = Owner:keyPressed("j")
+        local FindRadius = Radius * 0.5
+        FindRadius = FindRadius * FindRadius
+
+        foreach (K, V:entity = players()) {
+            if (ActivationPos:distance2(V:pos()) > FindRadius) {
+                continue
+            }
+
+            if (isPlayerWhitelisted(V:steamID())) {
+                if (V:health() < 100) {
+                    V:plySetHealth(V:health() + 1)
+                }
+                if (V:armor() < 100) {
+                    V:plySetArmor(V:armor() + 1)
+                }
+            }
+            else {
+                if (V:isAlive()) {
+                    #V:plyApplyForce( (V:pos() - ActivationPos):normalized() * 15000 * TickInt)
+
+                    if (KeyNuke) { boom2(V:pos(), 9999, 80) }
+
+                    local AwayPos = ActivationPos + (V:pos() - ActivationPos):normalized() * Radius
+                    V:teleport(AwayPos)
+                    V:setPos(AwayPos)
+
+
+                }
+            }
+        }
+
+        local NEnts = findInSphere(ActivationPos, Radius * 0.5)
+        if (NEnts > 0) {
+
+            foreach (K, V:entity = findToArray()) {
+                 local EntOwner = V:owner()
+
+                if (EntOwner != Owner) {
+                  
+
+                    local AwayPos = ActivationPos + vec(Radius,Radius,100)
+                    V:teleport(AwayPos)
+                    V:setPos(AwayPos)
+                }
+            }
+        }
+    }
+    else {
+        if (PropShield:isValid()) {
+            PropShield:propMakePersistent(0)
+            PropShield:propDelete()
+        }
+    }
+}
+
+elseif (last()) {
+    soundStop(2)
+}

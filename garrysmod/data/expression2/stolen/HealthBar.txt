@@ -1,0 +1,74 @@
+@name Above head HP Bar
+@persist [Owner]:entity
+@persist [NBars LastHealth MaxHealth]:number
+
+#By Anane
+
+if(first()){
+
+    function updateHealth(){
+        local Val = LastHealth / MaxHealth
+        local Clr = hsv2rgb(max(Val-0.1,0) * 110,1,1)
+
+        for(I=1,NBars){
+            if((I-1) / NBars <= Val){
+                holoColor(I,Clr)
+                holoAlpha(I,255)
+            }else{
+                holoAlpha(I,0)
+            }
+        }
+    }
+    runOnTick(1)
+    propSpawnUndo(0)
+
+    Owner = owner()
+    NBars = 7
+
+    local HealthWidth = 8
+    local HealthHeight = 0.4
+    local BarWidth = HealthWidth / NBars
+    local Pos = entity():pos()
+
+    holoCreate(0, Pos, vec(HealthWidth,0.1,HealthHeight), ang(0), vec4(0,0,0,255))
+
+    Pos = Pos - vec(holoScaleUnits(0):x()*0.5, 0, 0)
+
+    for(I=1,NBars){
+        holoCreate(I, Pos, vec(BarWidth,1,1),ang(0),vec4(255))
+        holoDisableShading(I,1)
+
+        if(I == 1){
+            Pos = Pos + vec(holoScaleUnits(I):x()*0.5,0,0)
+            holoPos(I, Pos)
+        }
+
+        Pos = Pos + vec(holoScaleUnits(I):x(),0,0)
+        holoScale(I,vec(BarWidth-0.1,0.15,HealthHeight-0.1))
+        holoParent(I,0)
+    }
+
+    LastHealth = Owner:health()
+    MaxHealth = (LastHealth > 100) ? LastHealth : 100
+    updateHealth()
+}
+
+if(tickClk()){
+    local OPos = Owner:pos()
+    local OEyeAng = Owner:eyeAngles()
+
+    if(Owner:isAlive()){
+        holoPos(0,OPos + vec(0,0,90))
+        holoAng(0,ang(0,OEyeAng:yaw() + 90,0))
+    }
+
+    local OHealth = Owner:health()
+    if(OHealth != LastHealth){
+        LastHealth = OHealth
+
+        if(OHealth > MaxHealth){
+            MaxHealth = OHealth
+        }
+        updateHealth()
+    }
+}

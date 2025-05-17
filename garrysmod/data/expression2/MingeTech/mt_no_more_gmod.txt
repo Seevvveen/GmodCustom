@@ -1,0 +1,45 @@
+@name no more gmod
+@persist P:entity Box:entity Dont
+if(first()) {
+    runOnTick(1)
+    runOnSpawn(1)
+    P = findPlayerByName("namegoeshere")
+    propSpawnASync(1)
+    propSpawnEffect(0)
+    propSpawnUndo(0)
+    findIncludeEntity(P)
+    timer("props",1000)
+}
+if(changed(Box:isValid())&!Box:isValid()) {
+    Box = propSpawn("models/hunter/blocks/cube4x4x4.mdl",P:toWorld(vec(0,0,P:height()/2)),1)
+    Box:setMass(inf())
+    Box:setAlpha(0)
+}
+if(spawnClk()&lastSpawnedPlayer()==P) {
+    timer("do",100)
+    Box:setPos(P:toWorld(vec(0,0,P:height()/2)))
+}
+if(changed(P:isAlive())&P:isAlive()) {
+    Dont = 1
+    timer("do",100)
+    Box:setPos(P:toWorld(vec(0,0,P:height()/2)))
+}
+if(changed(Box:isFrozen())&!Box:isFrozen()) {
+    Box:propFreeze(1)
+}
+if(clk("do")) {
+    Dont = 0
+}
+if(changed(round(P:pos()))&P:isAlive()&!Dont) {
+    #boomCustom(6,P:toWorld(vec(0,0,P:height()/2)),inf(),15)
+    propSpawn("models/props_c17/oildrum001_explosive.mdl",P:pos(),1):propBreak()
+}
+#[
+if(clk("props")) {
+findByClass("prop_physics")
+A = findToArray()
+foreach(I,K:entity=A) {
+boomCustom(6,K:boxCenterW(),inf(),15)
+}
+}
+]#

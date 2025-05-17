@@ -1,0 +1,25 @@
+@name E2Wiki-ApplyAngForce
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+runOnTick(1)
+
+findByModel("models/hunter/blocks/cube075x075x075.mdl")   #3x3 builders cube 
+Prop = find()   
+
+TargetAngle = ang(0,0,0)
+
+SpeedOfRotation = 200
+
+     Prop:applyAngForce((Prop:toLocal(TargetAngle)*SpeedOfRotation - Prop:angVel()*20) * shiftL(ang(Prop:inertia())) )
+    #1 Get the target angle and multiply by the speed you want to get it there
+    #2 Subtract the Angle Velocity to prevent prop from overshooting, Makes prop slow down before reaching target
+    
+    #3 Mutiply by interia  
+        #Since interia is given as a vector it must be shifted to the left so that the values align with the angles
+        #The Y axis controls the pitch
+        #The Z Controls Yaw
+        #The X Controls Roll
+    

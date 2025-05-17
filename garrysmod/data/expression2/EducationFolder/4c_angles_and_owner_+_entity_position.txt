@@ -1,0 +1,41 @@
+@name 4C Angles and Owner + entity Position
+@inputs 
+@outputs Chip_angle:angle Pitch Yaw Roll Chip_pos:vector Cx Cy Cz Owners_pos:vector Ox Oy Oz
+@persist 
+@trigger 
+
+#the owner of the chip is called owner()
+#the chip itself is called entity()
+
+interval(10)        #update the chip every 10 ticks
+
+
+##########
+#getting the chips angle
+
+Pitch = round(entity():angles():pitch(),0)      #
+Yaw = round(entity():angles():yaw(),0)          ##Grabs the Chip entity gets the angles then gets the Pitch yaw or roll respectivly
+Roll = round(entity():angles():roll(),0)        #
+
+Chip_angle = ang(Pitch,Yaw,Roll)        #think of this this as the same system as Vectors, vectors have XYZ - Angles have PYR
+
+
+###########
+#getting the chip position
+
+Chip_pos = entity():pos()   #this assigns the entity's position vector to the varible Chip_pos
+
+Cx = round(Chip_pos:x())    #
+Cy = round(Chip_pos:y())    ## Takes the XYZ values, rounds them, then assigns them to their Varibles
+Cz = round(Chip_pos:z())    #
+
+
+###########
+#Getting Owners postition
+
+Owners_pos = owner():pos()
+
+Ox = round(Owners_pos:x())  #
+Oy = round(Owners_pos:y())  ## Takes the XYZ values from the the owners vector and assins it to varibles
+Oz = round(Owners_pos:z())  #
+

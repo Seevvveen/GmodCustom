@@ -1,0 +1,21 @@
+{
+    "Lua.workspace.library": [
+        "C:\\Users\\holde\\AppData\\Roaming\\Code\\User\\globalStorage\\sumneko.lua\\addonManager\\addons\\garrysmod\\module\\library",
+        "..\\fields.lua",
+        "${addons}/garrysmod/module/library"
+    ],
+    "Lua.runtime.version": "LuaJIT",
+    "Lua.runtime.special": {
+        "include": "dofile",
+        "IncludeCS": "dofile"
+    },
+    "Lua.runtime.nonstandardSymbol": [
+        "continue",
+        "&&",
+        "||",
+        "!=",
+        "!",
+        "//",
+        "/**/"
+    ]
+}

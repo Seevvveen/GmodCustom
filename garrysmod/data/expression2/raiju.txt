@@ -1,0 +1,2052 @@
+@name Raiju
+@persist #[Vector]#     [ApplyForceVector StartJPosition MiddleJPosition EndJPosition StartPos TargetPos Pos AimDir Color]:vector
+@persist #[Number]#     [MC Z Realistic LinearInterpolation JumpAltitude HeartActive State SavedTime]
+@persist #[Number]#     [IsFriend Spin ShootTimer Charging ChargeTimer CooldownTimer Finished]
+@persist #[Entity]#     [E O Driver Seat Ring ClosestPlayer Victim GunHolo LaProp]:entity
+@persist #[Arrays]#     [TailA TailAngles Sound Friends PreviousVictims Holos]:array
+@persist #[String]#     [Info Version NewMode Step JumpingState]:string
+@persist #[Tables]#     [Raiju Var KA1 KA2 KA3 KA4 Keys]:table
+@persist #[Angles]#     [ApplyForceAngle TailAngle]:angle
+@persist #[Ranger]#     [JRanger]:ranger
+
+@model models/hunter/blocks/cube05x05x05.mdl 
+
+#[
+    -----------------------
+        System entries
+    -----------------------
+]#
+
+E = entity()
+O = owner()
+
+rangerPersist(1)
+rangerFilter(entity()) 
+rangerFilter(Seat) 
+rangerFilter(LaProp)
+rangerFilter(players())
+rangerHitWater(1)
+
+IX = E:toLocal(holoEntity(20):pos()):x() + 1
+IY = E:toLocal(holoEntity(20):pos()):y() + 1
+    
+Height = 55
+Driver = Seat:driver()
+
+Time = curtime()
+Spin = Time*800
+
+#[
+    -----------------------
+        Driving System
+    -----------------------
+]#
+
+if(Driver){
+    W       = Driver:keyForward()
+    S       = Driver:keyBack()
+    A       = Driver:keyLeft()
+    D       = Driver:keyRight()
+    Shift   = Driver:keySprint()
+    Alt     = Driver:keyWalk()
+    Space   = Driver:keyJump()
+}
+
+#ifdef propSpawn(string,number)
+
+if (first()){
+    
+    if(duped()){
+        selfDestructAll()
+    }
+    
+    propSpawnUndo(0)
+    
+    Version = "0.0.4"
+    
+    Color = vec(50,50,255)
+    GunHolo = holoEntity(170)
+    Charging = 0
+    Z = 1
+    
+    Friends = array(
+        "STEAM_0:0:77586387",  #katsu
+        "STEAM_0:0:528832741", #nane
+        "STEAM_0:0:134827726", #Styled
+        "STEAM_0:0:442733467", #Dashan
+        "STEAM_0:1:80646222"  #Hish
+    )
+    
+    
+    Sound = array(
+        "ambient.electrical_zap_7",
+        "ambient.electrical_zap_8",
+        "ambient.electrical_zap_9"
+    )
+    
+    SavedTime = Time
+    
+    E:setMass(50000)
+    E:setAlpha(0)
+    E:propGravity(0)
+    
+    #######
+    
+    holoCreate(1)
+    holoParent(1,E)
+    holoScale(1,vec(1.8,2.2,1.2)) 
+    holoColor(1,vec(0))
+    holoPos(1,E:toWorld(vec(-10,0,2)))
+    holoAng(1,E:toWorld(ang(0)))
+    
+    holoCreate(2)
+    holoParent(2,holoEntity(1))
+    holoScale(2,vec(1.8,1.2,1.2)) 
+    holoColor(2,vec(0))
+    holoPos(2,holoEntity(1):toWorld(vec(-35,0,0)))
+    holoAng(2,holoEntity(1):toWorld(ang(0)))
+    
+    holoCreate(3)
+    holoParent(3,holoEntity(2))
+    holoModel(3,"hq_sphere")
+    holoScale(3,vec(2.5,2,2))
+    holoColor(3,Color)
+    holoPos(3,holoEntity(2):toWorld(vec(-35,0,0)))
+    holoAng(3,holoEntity(2):toWorld(ang(0)))
+    holoDisableShading(3,1)
+    
+    holoCreate(4)
+    holoParent(4,holoEntity(3))
+    holoScale(4,vec(1.8,1.2,1.2)) 
+    holoColor(4,vec(0))
+    holoPos(4,holoEntity(3):toWorld(vec(-35,0,0)))
+    holoAng(4,holoEntity(3):toWorld(ang(0)))
+    
+    holoCreate(5)
+    holoParent(5,holoEntity(4))
+    holoModel(5,"hq_sphere")
+    holoScale(5,vec(2.5,2,2))
+    holoColor(5,Color)
+    holoPos(5,holoEntity(4):toWorld(vec(-35,0,0)))
+    holoAng(5,holoEntity(4):toWorld(ang(0)))
+    holoDisableShading(5,1)
+    
+    holoCreate(6)
+    holoParent(6,holoEntity(1))
+    holoScale(6,vec(1.8,1.2,1.2)) 
+    holoColor(6,vec(0))
+    holoPos(6,holoEntity(5):toWorld(vec(-35,0,0)))
+    holoAng(6,holoEntity(5):toWorld(ang(0)))
+    
+    holoCreate(7)
+    holoParent(7,holoEntity(6))
+    holoModel(7,"hq_sphere")
+    holoScale(7,vec(2.5,2,2))
+    holoColor(7,Color)
+    holoPos(7,holoEntity(6):toWorld(vec(-35,0,0)))
+    holoAng(7,holoEntity(6):toWorld(ang(0)))
+    holoDisableShading(7,1)
+    
+    holoCreate(8)
+    holoParent(8,holoEntity(7))
+    holoScale(8,vec(1.8,1.2,1.2)) 
+    holoColor(8,vec(0))
+    holoPos(8,holoEntity(7):toWorld(vec(-35,0,0)))
+    holoAng(8,holoEntity(7):toWorld(ang(0)))
+    
+    holoCreate(9)
+    holoParent(9,8)
+    holoModel(9,"pyramid")
+    holoColor(9,Color)
+    holoScale(9,vec(1.2,1.2,1.2))
+    holoPos(9,holoEntity(8):toWorld(vec(-18,0,0)))
+    holoAng(9,E:toWorld(ang(-90,0,0)))
+    holoDisableShading(9,1)
+        
+    holoCreate(10)
+    holoParent(10,E)
+    holoPos(10,E:toWorld(vec(-35,0,0)))
+    holoAng(10,E:toWorld(ang(0)))
+    
+    ##-- Front legs --##
+    
+    ### Left Leg
+    holoCreate(20)
+    holoParent(20,E)
+    holoAlpha(20,0)
+    holoPos(20,E:toWorld(vec(55,35,0)))
+    holoAng(20,E:toWorld(ang(0)))
+    
+    holoCreate(21)
+    holoParent(21,holoEntity(20))
+    holoAlpha(21,0)
+    holoPos(21,holoEntity(20):toWorld(vec(0,0,40)))
+    holoAng(21,holoEntity(20):toWorld(ang(0)))
+    
+    holoCreate(22)
+    holoParent(22,holoEntity(21))
+    holoAlpha(22,0)
+    holoPos(22,holoEntity(21):toWorld(vec(0,0,40)))
+    holoAng(22,holoEntity(21):toWorld(ang(0)))
+
+    
+    #######################################
+    holoCreate(23)
+    holoParent(23,E)
+    holoAlpha(23,0)
+    holoPos(23,E:toWorld(vec(55,-35,0)))
+    holoAng(23,E:toWorld(ang(0)))
+    
+    holoCreate(24)
+    holoParent(24,holoEntity(23))
+    holoAlpha(24,0)
+    holoPos(24,holoEntity(23):toWorld(vec(0,0,40)))
+    holoAng(24,holoEntity(23):toWorld(ang(0)))
+    
+    holoCreate(25)
+    holoParent(25,holoEntity(24))
+    holoAlpha(25,0)
+    holoPos(25,holoEntity(24):toWorld(vec(0,0,40)))
+    holoAng(25,holoEntity(24):toWorld(ang(0)))
+    
+    
+    ##-- Back segments --##
+    
+    ################# Back Left Leg
+    holoCreate(26)
+    holoParent(26,E)
+    holoAlpha(26,0)
+    holoPos(26,E:toWorld(vec(-55,35,0)))
+    holoAng(26,E:toWorld(ang(0)))
+    
+    holoCreate(27)
+    holoParent(27,holoEntity(26))
+    holoAlpha(27,0)
+    holoPos(27,holoEntity(26):toWorld(vec(0,0,30)))
+    holoAng(27,holoEntity(26):toWorld(ang(0)))
+    
+    holoCreate(28)
+    holoParent(28,holoEntity(27))
+    holoAlpha(28,0)
+    holoPos(28,holoEntity(27):toWorld(vec(0,0,30)))
+    holoAng(28,holoEntity(27):toWorld(ang(0)))
+    
+    holoCreate(29)
+    holoParent(29,holoEntity(28))
+    holoAlpha(29,0)
+    holoPos(29,holoEntity(28):toWorld(vec(0,0,30)))
+    holoAng(29,holoEntity(28):toWorld(ang(0)))
+    
+    ##-------------------------------------##
+    
+    ################# Back Right Legs
+    holoCreate(30)
+    holoParent(30,E)
+    holoAlpha(30,0)
+    holoPos(30,E:toWorld(vec(-55,-35,0)))
+    holoAng(30,E:toWorld(ang(0)))
+    
+    holoCreate(31)
+    holoParent(31,holoEntity(30))
+    holoAlpha(31,0)
+    holoPos(31,holoEntity(30):toWorld(vec(0,0,30)))
+    holoAng(31,holoEntity(30):toWorld(ang(0)))
+    
+    holoCreate(32)
+    holoParent(32,holoEntity(31))
+    holoAlpha(32,0)
+    holoPos(32,holoEntity(31):toWorld(vec(0,0,30)))
+    holoAng(32,holoEntity(31):toWorld(ang(0)))
+    
+    holoCreate(33)
+    holoParent(33,holoEntity(32))
+    holoAlpha(33,0)
+    holoPos(33,holoEntity(32):toWorld(vec(0,0,30)))
+    holoAng(33,holoEntity(32):toWorld(ang(0)))
+
+    ##include "libraries/mechs/raiju/functions"
+        function void sendMsg(Vectoring:vector, Str:string){
+        printColor(vec(138,43,226), "[ ", vec(0,255,255), "Raiju Next Gen", vec(138,43,226), " ]", vec(255),": ", Vectoring, Str)
+        E:soundPlay("Raiju_Notification", 2, "buttons/blip1.wav")
+        
+        if(O != Driver){
+            Seat:printColorDriver(vec(138,43,226), "[ ", vec(0,255,255), "Raiju Next Gen", vec(138,43,226), " ]", vec(255),": ", Vectoring, Str)
+        }
+    }
+    
+    function void hlx(Index:number, Parent:entity, Model:string, Material:string, Scale:vector, Color:vector, Pos:vector, Ang:angle, Shading:number, Add:number){
+        holoCreate(Index)
+        holoParent(Index,Parent)
+        holoModel(Index,Model)
+        holoMaterial(Index,Material)
+        holoScale(Index,Scale)
+        holoColor(Index,Color)
+        holoPos(Index,Pos)
+        holoAng(Index,Ang)
+        holoDisableShading(Index,Shading)
+        if(Add == 1){
+            Holos:pushNumber(Index)
+        }
+    }
+
+    function createDriverSeat(Pos:vector,Ang:angle,Ent:entity) {
+        Seat = seatSpawn("",Pos,Ang,1)
+        Seat:parentTo(Ent)
+        Seat:setAlpha(255)
+        Seat:propFreeze(0)
+        Seat:setColor(vec(0))
+        Seat:setMaterial("models/debug/debugwhite")
+    }
+    
+    function void tail2(MinIndex, MaxIndex, StartEntity:entity){ 
+        local VelW      = StartEntity:vel()
+        local VelL      = StartEntity:velL()
+        local TailAngle = StartEntity:angles() + ang(VelW:z() , VelL:y() / 10, 0)
+        
+        TailAngles:unshiftAngle(TailAngle)
+        TailAngles:removeAngle(MaxIndex + 1)
+        
+        for(I=MinIndex, MaxIndex){
+            holoParent(I, I > 1 ? holoEntity(I - 1) : StartEntity)
+            holoPos(I, holoEntity(I):parent():toWorld(vec(-20, 0, 0)))
+            holoAng(I, TailAngles[I, angle])
+        }
+    }
+    
+    function void entity:createTail(Max){   
+        switch(Step){
+            default,
+                if ( !holoEntity(Max) ){   
+                    while ( perf(10) & holoCanCreate() ){ 
+                        Z++
+                        holoCreate(Z)
+                        holoParent(Z, Z > 1 ? holoEntity(Z - 1) : This)
+                        holoPos(Z,This:toWorld(vec(Z*20,0,0)))
+                    }
+                }else{
+                    This:soundPlay(1, 0, "buttons/button" + randint(17,18) + ".wav") 
+                    sendMsg(vec(0,255,255), "Tail-Generator assembled a tail with an amount of " + Max + " holograms")
+                    Step = "finalStep"
+                }
+            break
+         
+            case "finalStep",
+                tail2(1,Max,holoEntity(10))
+            break 
+        }
+    }
+    
+    function number isDriverCurrentlyValid() {
+        return Driver:isValid() ? 1 : 0 
+    }
+    
+    function ranger generateDriverViewSystem(){
+        if (isDriverCurrentlyValid()) {  
+            return rangerOffset( 50000, Driver:shootPos(), Driver:eye() )
+        }else{
+            return rangerOffset( 50000, E:toWorld(vec(0)), E:forward() )
+            #return rangerOffset( 50000, E:toWorld( vec(0) ), E:toWorld( vec( E:pos()[1], E:pos()[2], E:forward():z() ) ) )
+        }
+    }
+    
+    function number getDriverYaw(Reducer){
+        return E:toLocal( ( generateDriverViewSystem():position() - E:pos() ):toAngle() ):yaw() / Reducer * (_PHI)
+    }
+    
+    function number getDriverPitch(Reducer){
+        return E:toLocal( ( generateDriverViewSystem():position() - E:pos() ):toAngle() ):pitch() / Reducer * (_PHI)
+    }
+    
+    function void modeChange(Mode:string){ 
+        NewMode = Mode
+    }   
+    
+    modeChange("init")
+
+
+    function ranger retrieveGroundInformation(){
+        return rangerOffset( Height * _PHI, E:toWorld( vec(0) ), -E:up() )
+    }
+    
+    
+    function number getTriangleSideLength(A, B, C){
+        return acos( (A ^ 2 + B ^ 2 - C ^ 2) / ( 2 * A * B ) )  
+    }
+    
+    function number arcCosine(A, B, C) { 
+        return acos( ( C ^ 2 + B ^ 2 - A ^ 2) / ( 2 * B * C ) )
+    }
+    
+    function number getSegmentsLength(From, To){
+        return holoEntity(From):pos():distance(holoEntity(To):pos())
+    }
+    
+    function void generateInverseKinematic3Joints(SegmentA, SegmentB, SegmentC, FinalPosition:vector) {
+        local LGU                 = getSegmentsLength(SegmentA, SegmentB)                    
+        local LGL                 = getSegmentsLength(SegmentB, SegmentC)
+        
+        local RotateAroundAxis    = E:toLocalAxis( FinalPosition - holoEntity(SegmentA):pos() )
+                                                    
+        local ConvertToAngle      = RotateAroundAxis:toAngle()
+        
+        local LinearInterpolation = min( RotateAroundAxis:length(), LGU + LGL - 0.01 )
+                        
+        local Ranger              = rangerOffset( 100, holoEntity(D):pos(), vec(0, 0, -1) )
+    
+        local GetGA               = Ranger:hitNormal():cross( E:forward():normalized():cross( Ranger:hitNormal() ) )
+                                            
+        local FinalGA             = slerp( quat( GetGA:toAngle() ), quat(E), _PI / ( _PHI ^ 3.5 ) ):toAngle()
+        
+        local GetP                = getTriangleSideLength( LinearInterpolation, LGU, LGL )
+                                
+        local RotationXYZ         = quat( ConvertToAngle:setRoll( ConvertToAngle:yaw() + 180 ) ) * qRotation( vec(0, -1, 0), GetP - 90 )
+                            
+        local GetP2               = getTriangleSideLength( LGU, LGL, LinearInterpolation )
+ 
+        holoAng( SegmentA, E:toWorld( RotationXYZ:toAngle() ) )
+
+         
+        holoAng( SegmentB, holoEntity(SegmentA):toWorld( ang( clamp(-GetP2 + 180, -150, 200), 0, 0 ) ) )
+                
+        ##-- Not mandatory but it's better to match the feet angle with the ground directly in the inverse kinematic --##
+        ##-- Finally matching it using the animation's ranger which is more accurate, therefore we disable this      --##
+        #holoAng( SegmentC, GetGA:toAngle() )
+        
+    }
+    
+    function number absoluteValue(X:number){
+        return abs(X) 
+    } 
+     
+    ##-- 4 joints 3 segments --##
+    function void xgenerateInverseKinematic4Joints(EndP:vector, D, C, B, A) { 
+        ReturnAbsAverage = sqrt(50)
+        ReturnAbs1       = absoluteValue( E:toLocal( holoEntity(A):pos() ):y() ) 
+        ReturnAbs2       = absoluteValue( holoEntity(A):toLocal( holoEntity(B):pos() ):x() )
+        ReturnAbs3       = absoluteValue( holoEntity(B):toLocal( holoEntity(C):pos() ):x() )  
+        ReturnAbs4       = absoluteValue( holoEntity(C):toLocal( holoEntity(D):pos() ):x() )
+        
+        ReturnCalc       = ReturnAbs4 + ReturnAbsAverage * ( 1 / 2 )  
+        DiffP            = E:toLocalAxis(EndP - holoEntity(A):pos())
+        
+        Tang             = DiffP:toAngle():setRoll( atan( DiffP[10%4], DiffP[9%4] ) )                    
+        DiffLocal        = holoEntity(A):toLocalAxis( EndP - holoEntity(B):pos() )
+    
+        Max              = min( DiffLocal:length(), abs(holoEntity(B):toLocal(holoEntity(C):pos()):x()) + ReturnCalc ) #min(DiffP:length()*ReturnAbs1/(ReturnAbs1+ReturnAbs2),(ReturnAbs1+ReturnAbs2+ReturnAbs3)/2-0.001) deprecated
+
+
+        holoAng(A, E:toWorld(Tang:rotateAroundAxis( Tang:right(), (1 - min(1, DiffP:length() / (abs( holoEntity(A):toLocal(holoEntity(B):pos()):x() ) + abs(holoEntity(B):toLocal(holoEntity(C):pos()):x())) - 0.5)) * 90)))    
+    
+        holoAng(B, holoEntity(A):toWorld(ang(atan(-DiffLocal[11%4], DiffLocal[9%4]) + acos((Max^2 + abs(holoEntity(B):toLocal(holoEntity(C):pos()):x())^2 - ReturnCalc^2) / (10%4 * abs(holoEntity(B):toLocal(holoEntity(C):pos()):x()) * Max)), 0, 0)))
+        
+        holoAng(C, holoEntity(B):toWorld(ang(acos((ReturnCalc^2 + abs(holoEntity(B):toLocal(holoEntity(C):pos()):x())^2 - Max^2) / ( 2 * abs(holoEntity(B):toLocal(holoEntity(C):pos()):x()) * ReturnCalc)) + 180,0,0)))
+    }
+     
+    function number returnAbsoluteValueZLength(B1:entity,B2:vector){ 
+        return abs(B1:toLocal(B2):z()) 
+    }
+    
+    function void entity:generateFinalIK4S3(A, B, C, D, End:vector, IkRotationPlus, YawRot){
+        #hip calc#
+        local L1 = returnAbsoluteValueZLength(holoEntity(A),holoEntity(B):pos())
+        local L2 = returnAbsoluteValueZLength(holoEntity(B),holoEntity(C):pos())    
+        local L3 = returnAbsoluteValueZLength(holoEntity(C),holoEntity(D):pos())
+    
+    
+        if(holoEntity(A)){
+            local AxisA = entity():toLocalAxis(End-holoEntity(A):pos())
+            local Roll = AxisA:toAngle():setRoll(AxisA:toAngle():yaw()+180+YawRot)
+            local HipRotation =  (L1 + L2 + L3 + IkRotationPlus) - abs(min(AxisA:length(),L1+L2+L3+IkRotationPlus))
+            local Quat = quat(Roll) * qRotation(vec(0,90 + HipRotation,0))
+        
+            holoAng(A,entity():toWorld(Quat:toAngle()))
+        }
+        ##########
+    
+        #lower parts calc#
+        if(holoEntity(B) & holoEntity(C)){
+            local AxisB = holoEntity(A):toLocalAxis(holoEntity(B):pos()-End)
+            local Dist = (holoEntity(B):pos()-End)
+            local LengthB = min(Dist:length(),L2+L3)
+            local KneeAnkleRotation = arcCosine(L2,L3,LengthB)
+            local PitchRotation = AxisB:toAngle():pitch()
+    
+            holoAng(B,holoEntity(A):toWorld(ang(-90+PitchRotation-KneeAnkleRotation,0,0)))
+            holoAng(C,holoEntity(B):toWorld(ang(180-holoEntity(B):elevation(End)*2,0,0)))     
+        }
+        ##################
+    }
+       
+    function void cycleControl(CS){
+        Var["CycleSpeed",number] = CS
+    }
+
+    function void animationCycleController(){
+        MC = ( MC + Var["CycleSpeed",number] ) 
+        if ( MC > 1 )
+        {
+            MC = 0 
+        }
+    }
+    
+    function table:runLegsAnimation(Order, Speed, EndV:vector, MSH, Foot){
+        local T = This
+        
+        if (T["Parts",string] != "Check" & T["Parts",string] != "Run"){ 
+            T["Parts",string] = "Check" 
+        }
+        
+        switch (T["Parts",string]){
+            case "Check",
+            
+                holoAng(Foot, T["SaveAng",angle])
+                  
+                local Start = Order
+                local End   = Order + 0.1
+                
+                if (MC >= Start & MC <= End){
+                    local RangerA = rangerOffset(1000, EndV, E:up() * -1)
+                    
+                    if (RangerA:hit()){ 
+                        if (RangerA:position():distance( T["Start",vector] ) >= 15){ 
+                            T["Parts",string] = "Run" 
+                        }
+                    }
+                } 
+            break 
+    
+            case "Run",
+                Start = Order
+                
+                T["Step",number] = min( T["Step",number] + Speed, 1 )
+                
+                local RangerB = rangerOffset( 1000,EndV, E:up() * -1 ) 
+                local Dist    = T["Start",vector]:distance(RangerB:position())
+                local Mid     = mix(T["Start",vector], RangerB:position(), 0.5) + E:up() * min(Dist / MSH, 80 / 1.2)
+
+                T["Curve",vector] = bezier( T["Start",vector], Mid, RangerB:position(), T["Step",number]) 
+                
+                local X     = clamp(E:velL():x() / ( 2 * 2 ), -40, 40)
+                local Y     = clamp(E:velL():y() / ( 2 * 2),  -30, 30)
+                local Norm  = quat( ang(0, E:angles():yaw(), 0) )
+                local Slerp = slerp( quat(holoEntity(Foot):toWorld(ang(abs(X),0,-Y))), Norm, T["Step",number] ):toAngle()  
+                
+                holoAng(Foot,Slerp)
+                
+                if(T["Step",number]>=1){
+                    local CachedRandomizer = randint(1,99999)
+                    soundPlay("FeetImpactSound_"  + CachedRandomizer, 1, "npc/dog/dog_footstep" + randint(1,4) + ".wav")
+                    soundPitch("FeetImpactSound_" + CachedRandomizer, 220) 
+                    
+                    T["Start",vector]  = T["Curve",vector]
+                    T["SaveAng",angle] = holoEntity(Foot):angles()
+                    T["Step",number]   = 0
+                    T["Parts",string]  = "Check" 
+                } 
+            break  
+        }
+    }
+    
+    function void table:resetProceduralAnimation(NewPosition:vector){
+        This["Curve",vector] = This["Start",vector] = NewPosition 
+        This["Step",number]  = This["Cycle",number] = 0
+        This["Parts",string] = "Check"
+    }
+
+    function vector table:legPosition(){ 
+        return This["Curve",vector]   
+    }
+
+    function void applyVector(Entity:entity, Movement:vector){
+        Entity:applyForce(Movement * Entity:mass())
+    }
+    
+    function void applyAngles(Entity:entity, Direction:angle){
+        Entity:applyAngForce(Direction * Entity:mass())
+    }
+    
+    function vector lerpVec(V1:vector, V2:vector, T:number) {
+        return V1 + (V2 - V1) * T
+    }
+    
+    function number strInArray(Str:string,A:array){
+        for(I=1,A:count()){
+            if(A[I,string] == Str){
+                return 1
+            }
+        }
+        return 0
+    }
+    
+    function entity findClosestPlayer(Pos:vector, Radius:number,ExcludeArray:array) {
+        Radius = Radius * Radius
+        
+        foreach(K,V:entity = players()){
+            local Dist = Pos:distance2(V:pos())
+            
+            if(Dist < Radius & V:isAlive() & !strInArray(V:steamID(),ExcludeArray)){
+                return V
+            }
+        }
+        return noentity()
+    }
+
+    PreviousVictims = array(owner():steamID())
+    
+    function prepareLaser() {
+        if(curtime() < CooldownTimer){
+            return
+        }
+
+        Charging = 1
+        SavedTime = Time
+        ChargeTimer = curtime() + 4
+        CooldownTimer = ChargeTimer + 0.7
+        Finished = 0
+        
+        holoEntity(130):soundPlay("LaserSound",4,"ambient/energy/force_field_loop1.wav")
+    }
+    
+    function void refreshing(){
+        if(!Seat:isValid()){
+            createDriverSeat(E:toWorld(vec(35,0,5)),E:toWorld(ang(0,-90,0)),E)
+        }
+        animationCycleController()
+        E:createTail(8)        
+    }
+    
+    function void init(){
+        if (changed( E ) & E){
+            KA1:resetProceduralAnimation(E:toWorld(vec(IX, IY, -Height)))
+            KA2:resetProceduralAnimation(E:toWorld(vec(IX, IY, -Height)))
+        }        
+        modeChange("drivable")
+    }
+        
+    function void drivable(){
+        if(retrieveGroundInformation():hit()){
+            E:propGravity(0)
+            
+            cycleControl(0.080)
+            
+            KA1:runLegsAnimation(0.25, 0.15, E:toWorld( vec(IX, IY, 0) + E:velL() / 4 ), 4, 22) 
+            generateInverseKinematic3Joints(20, 21, 22, KA1:legPosition())
+            
+            KA2:runLegsAnimation(0.75, 0.15, E:toWorld( vec(IX, -IY, 0) + E:velL() / 4 ), 4, 25) 
+            generateInverseKinematic3Joints(23, 24, 25, KA2:legPosition())
+            
+            
+            KA3:runLegsAnimation(0.55, 0.25, E:toWorld( vec(-IX, IY, 0) + E:velL() / 4 ), 4, 29) 
+            #E:generateInverseKinematic4Joints(26, 27, 28, 29, KA3:legPosition(), 180, 0)
+            E:generateFinalIK4S3(26, 27, 28, 29, KA3:legPosition(), 0, 0) 
+            
+            KA4:runLegsAnimation(0, 0.25, E:toWorld( vec(-IX, -IY, 0) + E:velL() / 4 ), 4, 33) 
+            E:generateFinalIK4S3(30, 31, 32, 33, KA4:legPosition(), 0, 0)
+           
+            
+            Cosine = cos( curtime() * exp(5) )
+            Sinus  = sin( curtime() * exp(4.5) )
+    
+            Raiju["Walking", number] = clamp( Raiju["Walking", number] + ( ( W |A |S |D ) ? 10 : -10 ), 0, 60 )
+            local HandleMovement     = E:forward() * Raiju["Walking",number] * (W-S) + E:right() * Raiju["Walking",number] / 3 * (D-A)
+   
+            local Vector             = ( vec(0, 0, -retrieveGroundInformation():distance() + Height + Cosine / 2 ) * 10 + HandleMovement + ( -E:vel() * vec(0.3, 0.3, 1) ) )
+            
+            local GetGroundAngle     = retrieveGroundInformation():hitNormal():cross( E:forward():normalized():cross( retrieveGroundInformation():hitNormal() ) ):toAngle()
+            
+            local Angles             = ( E:toLocal( ang( Cosine + GetGroundAngle:pitch() + getDriverPitch(10), E:angles():yaw() + getDriverYaw(8), -getDriverYaw(20) / _PHI + GetGroundAngle:roll() ) ) * log(20,1.5) + (-E:angVel() * ang(1,1,1)) )
+ 
+            applyVector( E, Vector )
+            applyAngles( E, Angles )
+            
+            
+            if (Shift){
+                modeChange("startRunning")
+            }
+            
+            if (Alt){
+                modeChange("startCrouching")
+            }
+            
+            if (changed(Space) & Space){
+                modeChange("calculateTrajectory")
+            }
+        }else{
+            modeChange("getBackToGround")
+        }   
+    } 
+    
+    function void startRunning(){
+        if (retrieveGroundInformation():hit()){
+            E:propGravity(0)
+            
+            cycleControl(0.15)
+            
+            KA1:runLegsAnimation(0.25, 0.25, E:toWorld( vec(IX, IY, 0) + E:velL() / 8 ), 4, 22) 
+            generateInverseKinematic3Joints(20, 21, 22, KA1:legPosition())
+            
+            KA2:runLegsAnimation(0.25, 0.25, E:toWorld( vec(IX, -IY, 0) + E:velL() / 8 ), 4, 25) 
+            generateInverseKinematic3Joints(23, 24, 25, KA2:legPosition())
+            
+            
+            KA3:runLegsAnimation(0.75, 0.18, E:toWorld( vec(-IX - 20, IY, 0) + E:velL() / 10 ), 4, 29) 
+            E:generateFinalIK4S3(26, 27, 28, 29, KA3:legPosition(), 0, 0)
+            
+            KA4:runLegsAnimation(0.75, 0.18, E:toWorld( vec(-IX - 20, -IY, 0) + E:velL() / 10 ), 4, 33) 
+            E:generateFinalIK4S3(30, 31, 32, 33, KA4:legPosition(), 0, 0)
+           
+            
+            
+            local Cosinus            = cos( MC * 270 ) * -20
+      
+            local HeightAdjust       = Cosinus / 2
+    
+            Raiju["Walking", number] = clamp( Raiju["Walking", number] + ( ( W ) ? 7.5 : 0 ), 0, 290 )
+            local HandleMovement     = E:forward() * Raiju["Walking",number] * (W-S)
+   
+            local Vector             = ( vec(0, 0, -retrieveGroundInformation():distance() + Height + HeightAdjust ) * 10 + HandleMovement + ( -E:vel() * vec(0.3, 0.3, 1) ) )
+            
+            local GetGroundAngle     = retrieveGroundInformation():hitNormal():cross( E:forward():normalized():cross( retrieveGroundInformation():hitNormal() ) ):toAngle()
+            
+            local Angles             = ( E:toLocal( ang( HeightAdjust + GetGroundAngle:pitch() + getDriverPitch(10), E:angles():yaw() + getDriverYaw(8), -getDriverYaw(20) / _PHI + GetGroundAngle:roll() ) ) * log(20,1.5) + (-E:angVel() * ang(1,1,1)) )
+  
+            applyVector( E, Vector )
+            applyAngles( E, Angles )
+            
+            
+            if (!Shift){
+                if (round(toUnit("km/h", E:velL():length())) >= 30){
+                    modeChange("landing")
+                }else{
+                    modeChange("drivable")
+                }
+            }
+            
+            if ( changed(Space) & Space){
+                modeChange("calculateTrajectory")
+            }
+        }else{
+            modeChange("getBackToGround")
+        }   
+    }
+    
+    function void startCrouching(){
+        if (retrieveGroundInformation():hit()){
+            E:propGravity(0)
+            
+            cycleControl(0.070)
+            
+            KA1:runLegsAnimation(0.25, 0.15, E:toWorld( vec(IX, IY, 0) + E:velL() / 4 ), 4, 22) 
+            generateInverseKinematic3Joints(20, 21, 22, KA1:legPosition())
+            
+            KA2:runLegsAnimation(0.75, 0.15, E:toWorld( vec(IX, -IY, 0) + E:velL() / 4 ), 4, 25) 
+            generateInverseKinematic3Joints(23, 24, 25, KA2:legPosition())
+            
+            
+            KA3:runLegsAnimation(0.55, 0.25, E:toWorld( vec(-IX, IY, 0) + E:velL() / 4 ), 4, 29) 
+            E:generateFinalIK4S3(26, 27, 28, 29, KA3:legPosition(), 0, 0)
+            
+            KA4:runLegsAnimation(0, 0.25, E:toWorld( vec(-IX, -IY, 0) + E:velL() / 4 ), 4, 33) 
+            E:generateFinalIK4S3(30, 31, 32, 33, KA4:legPosition(), 0, 0)
+           
+            
+            Raiju["Walking", number] = clamp( Raiju["Walking", number] + ( ( W |A |S |D ) ? 10 : -10 ), 0, 30 )
+            local HandleMovement     = E:forward() * Raiju["Walking",number] * (W-S) + E:right() * Raiju["Walking",number] / 3 * (D-A)
+   
+            local Vector             = ( vec(0, 0, -retrieveGroundInformation():distance() + Height / 1.8 ) * 10 + HandleMovement + ( -E:vel() * vec(0.3, 0.3, 1) ) )
+            
+            local GetGroundAngle     = retrieveGroundInformation():hitNormal():cross( E:forward():normalized():cross( retrieveGroundInformation():hitNormal() ) ):toAngle()
+            
+            local Angles             = ( E:toLocal( ang( 15 + GetGroundAngle:pitch() + getDriverPitch(10), E:angles():yaw() + getDriverYaw(8), -getDriverYaw(20) / _PHI + GetGroundAngle:roll() ) ) * log(20,1.5) + (-E:angVel() * ang(1,1,1)) )
+ 
+            applyVector( E, Vector )
+            applyAngles( E, Angles )
+           
+            
+            if (Shift){
+                modeChange("startRunning")
+            }
+            
+            if(!Alt){
+                modeChange("drivable")
+            }
+            
+            if ( changed(Space) & Space){
+                modeChange("calculateTrajectory")
+            }
+        }else{
+            modeChange("getBackToGround")
+        }   
+    }
+    
+    function ranger jumpTrajectory(MaxDistance){
+        local TrajectoryPath = rangerOffset(MaxDistance, Driver:shootPos(), Driver:eye())
+    
+        if (TrajectoryPath:hit()){
+            return TrajectoryPath
+        }else{
+            return rangerOffset(50000, TrajectoryPath:position(), vec(0,0,-1))
+        }
+    }
+    
+    function void calculateTrajectory(){
+        JRanger        = jumpTrajectory(2700)
+        StartJPosition = E:pos()
+        EndJPosition   = JRanger:position()
+            
+        JumpAltitude   = StartJPosition:distance( EndJPosition ) / 2
+            
+        AttackAngle    = JRanger:hitNormal():toAngle()
+      
+        if(JRanger:distance() > 3000 |  JRanger:distance() <= 200){
+            LinearInterpolation = 0
+            sendMsg(vec(255,0,0), "Jump is aborted because of invalid distance (too close or too far)")
+            modeChange("drivable")
+        }else{
+            modeChange("jumping")
+            E:soundPlay("JumpSound", 5, "ambient/energy/whiteflash.wav")
+        }
+    }
+    
+    function void jumping(){
+        #if (changed( NewMode == "jumping" ) & NewMode == "jumping")
+        if(LinearInterpolation < 1){
+            LinearInterpolation = min( LinearInterpolation + 0.045 + (0.010 * abs(E:velL():normalized():z())), 1 )
+            
+            MiddleJPosition     = mix( StartJPosition, EndJPosition, 0.5 ) + vec(0,0, JumpAltitude / 1.35)
+
+            local ArcTrajectory = bezier( StartJPosition, MiddleJPosition, EndJPosition, LinearInterpolation )
+            
+            local FinalVector   = (ArcTrajectory - E:pos()) * 10 - (E:vel() * 1) 
+            
+            local Dir = (EndJPosition - StartJPosition)
+            local FinalAngles   = E:toLocal(ang(sin(LinearInterpolation * -290) * ( (15 / 2100) * Dir:length() ), Dir:toAngle():yaw(),0)) * 4 - E:angVel() * 1
+            
+            applyVector( E, FinalVector )
+            applyAngles( E, FinalAngles )  
+            
+            
+            KA1:resetProceduralAnimation(E:toWorld(vec(IX,IY,-55)   - (E:velL() / 20) * E:velL():normalized():z()))
+            KA2:resetProceduralAnimation(E:toWorld(vec(IX,-IY,-55)  - (E:velL() / 20) * E:velL():normalized():z()))
+            KA3:resetProceduralAnimation(E:toWorld(vec(-IX,IY,-55)  - (E:velL() / 20) * E:velL():normalized():z()))
+            KA4:resetProceduralAnimation(E:toWorld(vec(-IX,-IY,-55) - (E:velL() / 20) * E:velL():normalized():z()))
+            
+            generateInverseKinematic3Joints(20, 21, 22, KA1:legPosition())
+            
+            generateInverseKinematic3Joints(23, 24, 25, KA2:legPosition())
+            
+            E:generateFinalIK4S3(26, 27, 28, 29, KA3:legPosition(), 0, 0)
+            
+            E:generateFinalIK4S3(30, 31, 32, 33, KA4:legPosition(), 0, 0)
+    
+            holoAng(22, E:toWorld(ang(0)))
+            holoAng(25, E:toWorld(ang(0)))
+            
+            holoAng(29, E:toWorld(ang(0)))
+            holoAng(33, E:toWorld(ang(0)))
+        }
+        
+        if (LinearInterpolation >= 1){
+            LinearInterpolation = 0
+            
+            KA1:resetProceduralAnimation(rangerOffset(1000, E:toWorld(vec(IX ,  IY,0)),  E:up()*-1):position())
+            KA2:resetProceduralAnimation(rangerOffset(1000, E:toWorld(vec(IX ,  -IY,0)), E:up()*-1):position())
+            KA3:resetProceduralAnimation(rangerOffset(1000, E:toWorld(vec(-IX, IY,0)),  E:up()*-1):position())
+            KA4:resetProceduralAnimation(rangerOffset(1000, E:toWorld(vec(-IX, -IY,0)), E:up()*-1):position())
+            
+            modeChange("landing")
+        }     
+    }
+    
+    function void landing(){  
+        if(!retrieveGroundInformation():hit()){
+            LinearInterpolation = 0
+            modeChange("getBackToGround")
+        }
+        
+        if(LinearInterpolation < 1.25){
+            LinearInterpolation = min(LinearInterpolation + 0.1, 1)
+            
+            KA1:resetProceduralAnimation( rangerOffset(70, E:toWorld(vec(IX,IY,0) + E:velL()/10), vec(0,0,-1)):position() )
+            KA2:resetProceduralAnimation( rangerOffset(70, E:toWorld(vec(IX,-IY,0) + E:velL()/10), vec(0,0,-1)):position() ) 
+            KA3:resetProceduralAnimation( rangerOffset(70, E:toWorld(vec(-IX,IY,0) + E:velL()/10), vec(0,0,-1)):position() ) 
+            KA4:resetProceduralAnimation( rangerOffset(70, E:toWorld(vec(-IX,-IY,0) + E:velL()/10), vec(0,0,-1)):position() ) 
+          
+            generateInverseKinematic3Joints(20, 21, 22, KA1:legPosition())
+            
+            generateInverseKinematic3Joints(23, 24, 25, KA2:legPosition())
+            
+            E:generateFinalIK4S3(26, 27, 28, 29, KA3:legPosition(), 0, 0)
+            
+            E:generateFinalIK4S3(30, 31, 32, 33, KA4:legPosition(), 0, 0)
+        
+        
+            local GetGroundAngle = retrieveGroundInformation():hitNormal():cross( E:forward():normalized():cross( retrieveGroundInformation():hitNormal() ) ):toAngle()
+            local Angles         = ( E:toLocal( ang( randint(7, 14) + GetGroundAngle:pitch() + getDriverPitch(10), E:angles():yaw() + getDriverYaw(8), -getDriverYaw(20) / _PHI + GetGroundAngle:roll() ) ) * log(20,1.5) + (-E:angVel() * ang(1,0.7,1)) )
+            
+            local ZVectoring     = -E:velL():setZ(0):normalized():length() * 25
+            
+            local Vector         = (vec(0,0,-retrieveGroundInformation():distance() + Height / 1.2 + ZVectoring) * 10 + (-E:vel() * vec(0.1,0.1,1)))
+            
+            applyVector( E, Vector )
+            applyAngles( E, Angles )
+            
+            
+            Direction = E:velL():normalized():x() >= 0 ? 1 : -1
+                
+            RelativeS = round(toUnit("km/h",E:velL():length())) * Direction
+            
+            
+        }
+        
+        if(LinearInterpolation >= 1){
+            LinearInterpolation = 0
+            
+            KA1:resetProceduralAnimation(rangerOffset(90, E:toWorld(vec(IX + (RelativeS * 3), IY,0)),  E:up()*-1):position())
+            KA2:resetProceduralAnimation(rangerOffset(90, E:toWorld(vec(IX + (RelativeS * 3),-IY,0)), E:up()*-1):position())
+            KA3:resetProceduralAnimation(rangerOffset(90, E:toWorld(vec(-IX + (RelativeS * 3),IY,0)),  E:up()*-1):position())
+            KA4:resetProceduralAnimation(rangerOffset(90, E:toWorld(vec(-IX + (RelativeS * 3),-IY,0)), E:up()*-1):position())
+            
+            modeChange("drivable")
+        }    
+    }
+    
+    function void getBackToGround(){
+        if(!retrieveGroundInformation():hit()){
+            E:propGravity(1)
+            
+            local Vector = -E:vel() * 0.003
+            local Angle  = ( E:toLocal( ang( 0, E:angles():yaw(), 0 ) ) ) * 6 + ( -E:angVel() * 1 )
+            applyVector( E, Vector )
+            applyAngles( E, Angle )
+            
+            KA1:resetProceduralAnimation(E:toWorld( vec(IX,IY,-55)   + E:velL() / 20 ))
+            KA2:resetProceduralAnimation(E:toWorld( vec(IX,-IY,-55)  + E:velL() / 20 ))
+            KA3:resetProceduralAnimation(E:toWorld( vec(-IX,IY,-55)  + E:velL() / 20 ))
+            KA4:resetProceduralAnimation(E:toWorld( vec(-IX,-IY,-55) + E:velL() / 20 ))
+        
+            generateInverseKinematic3Joints(20, 21, 22, KA1:legPosition())
+            
+            generateInverseKinematic3Joints(23, 24, 25, KA2:legPosition())
+            
+            E:generateFinalIK4S3(26, 27, 28, 29, KA3:legPosition(), 0, 0)
+            
+            E:generateFinalIK4S3(30, 31, 32, 33, KA4:legPosition(), 0, 0)
+            
+          
+        }else{
+            KA1:resetProceduralAnimation(E:toWorld( vec(IX,IY,-Height - 25)   ))
+            KA2:resetProceduralAnimation(E:toWorld( vec(IX,-IY,-Height - 25)  ))
+            KA3:resetProceduralAnimation(E:toWorld( vec(-IX,IY,-Height - 25)  ))
+            KA4:resetProceduralAnimation(E:toWorld( vec(-IX,-IY,-Height - 25) ))
+            modeChange("drivable")
+        }     
+    }
+}
+
+
+if(!holoEntity(35)){
+    while(perf(99)&holoCanCreate()){
+        ###################################################
+        ################### Body Holos ####################
+        ###################################################
+
+        ##############################################
+        #################### Front Legs    
+        ########## Left
+        hlx(35,holoEntity(20),"cube","",vec(1.83,0.43,2.03),Color,holoEntity(20):toWorld(vec(0)),holoEntity(20):toWorld(ang(0)),1,1)
+    
+        holoCreate(36)
+        holoParent(36,20)
+        holoModel(36,"cube")
+        holoColor(36,vec(0))
+        holoScale(36,vec(1.8,1.2,2))
+        holoPos(36,holoEntity(20):toWorld(vec(0,0,0)))
+        holoAng(36,holoEntity(20):toWorld(ang(0,0,0)))
+        holoDisableShading(36,1)
+    
+        ###
+        hlx(38,holoEntity(20),"cube","",vec(1.51,0.25,2.2),Color,holoEntity(20):toWorld(vec(0,0,25)),holoEntity(20):toWorld(ang(0)),1,1)
+    
+        holoCreate(39)
+        holoParent(39,20)
+        holoModel(39,"cube")
+        holoColor(39,vec(0))
+        holoScale(39,vec(1.5,0.75,2.2))
+        holoPos(39,holoEntity(20):toWorld(vec(0,0,25)))
+        holoAng(39,holoEntity(20):toWorld(ang(0,0,0)))
+        holoDisableShading(39,1)
+    
+        ##
+    
+        holoCreate(41)
+        holoPos(41,holoEntity(21):toWorld(vec(0,0,0)))
+        holoAng(41,holoEntity(21):toWorld(ang(90,0,90)))
+        holoModel(41,"hq_tube")
+        holoParent(41,21)
+        holoScale(41,vec(1.5,1.5,1.1))
+        holoColor(41,vec(0))
+        
+        hlx(42,holoEntity(21),"cylinder","",vec(1.45,1.45,1.05),Color,holoEntity(21):toWorld(vec(0)),holoEntity(21):toWorld(ang(90,0,90)),1,1)
+        
+        ####
+        hlx(43,holoEntity(21),"cube","",vec(1.51,0.25,2.75),Color,holoEntity(21):toWorld(vec(0,0,17.5)),holoEntity(21):toWorld(ang(0)),1,1)
+        
+        holoCreate(44)
+        holoParent(44,21)
+        holoModel(44,"cube")
+        holoColor(44,vec(0))
+        holoScale(44,vec(1.5,0.75,2.75))
+        holoPos(44,holoEntity(21):toWorld(vec(0,0,17.5)))
+        holoAng(44,holoEntity(21):toWorld(ang(0,0,0)))
+        holoDisableShading(44,1)
+    
+        #####
+        
+        holoCreate(46)
+        holoParent(46,21)
+        holoModel(46,"cube")
+        holoColor(46,vec(0))
+        holoScale(46,vec(1.9,1.9,0.1))
+        holoPos(46,holoEntity(21):toWorld(vec(0,0,33)))
+        holoAng(46,holoEntity(21):toWorld(ang(0,0,0)))
+        
+        ##
+        # prism
+        hlx(47,holoEntity(20),"prism","",vec(1.83,1.21,1.99),Color,holoEntity(20):toWorld(vec(0)),holoEntity(20):toWorld(ang(0)),1,1)
+        
+        hlx(48,holoEntity(20),"prism","",vec(1.4,0.8,1.5),Color,holoEntity(20):toWorld(vec(0,0,22)),holoEntity(20):toWorld(ang(0,0,180)),1,1)
+        
+        hlx(49,holoEntity(21),"prism","",vec(1.4,0.8,1.0),Color,holoEntity(21):toWorld(vec(0,0,14)),holoEntity(21):toWorld(ang(0)),1,1)
+        
+        hlx(50,holoEntity(21),"prism","",vec(1.4,0.8,1.0),Color,holoEntity(21):toWorld(vec(0,0,26)),holoEntity(21):toWorld(ang(0,0,180)),1,1)
+        
+        ########## Right
+        hlx(51,holoEntity(23),"cube","",vec(1.83,0.43,2.03),Color,holoEntity(23):toWorld(vec(0)),holoEntity(23):toWorld(ang(0)),1,1)
+        
+        holoCreate(52)
+        holoParent(52,23)
+        holoModel(52,"cube")
+        holoColor(52,vec(0))
+        holoScale(52,vec(1.8,1.2,2))
+        holoPos(52,holoEntity(23):toWorld(vec(0,0,0)))
+        holoAng(52,holoEntity(23):toWorld(ang(0,0,0)))
+        holoDisableShading(52,1)
+        
+        ###
+        hlx(53,holoEntity(23),"cube","",vec(1.51,0.25,2.2),Color,holoEntity(23):toWorld(vec(0,0,25)),holoEntity(23):toWorld(ang(0)),1,1)
+        
+        holoCreate(54)
+        holoParent(54,23)
+        holoModel(54,"cube")
+        holoColor(54,vec(0))
+        holoScale(54,vec(1.5,0.75,2.2))
+        holoPos(54,holoEntity(23):toWorld(vec(0,0,25)))
+        holoAng(54,holoEntity(23):toWorld(ang(0,0,0)))
+        holoDisableShading(54,1)
+        
+        ##
+        
+        holoCreate(55)
+        holoPos(55,holoEntity(24):toWorld(vec(0,0,0)))
+        holoAng(55,holoEntity(24):toWorld(ang(90,0,90)))
+        holoModel(55,"hq_tube")
+        holoParent(55,24)
+        holoScale(55,vec(1.5,1.5,1.1))
+        holoColor(55,vec(0))
+        
+        hlx(56,holoEntity(24),"cylinder","",vec(1.45,1.45,1.05),Color,holoEntity(24):toWorld(vec(0)),holoEntity(24):toWorld(ang(90,0,90)),1,1)
+    
+        ####
+        hlx(57,holoEntity(24),"cube","",vec(1.51,0.25,2.75),Color,holoEntity(24):toWorld(vec(0,0,17.5)),holoEntity(24):toWorld(ang(0)),1,1)
+        
+        holoCreate(58)
+        holoParent(58,24)
+        holoModel(58,"cube")
+        holoColor(58,vec(0))
+        holoScale(58,vec(1.5,0.75,2.75))
+        holoPos(58,holoEntity(24):toWorld(vec(0,0,17.5)))
+        holoAng(58,holoEntity(24):toWorld(ang(0,0,0)))
+        holoDisableShading(58,1)
+    
+        #####
+        
+        holoCreate(59)
+        holoParent(59,24)
+        holoModel(59,"cube")
+        holoColor(59,vec(0))
+        holoScale(59,vec(1.9,1.9,0.1))
+        holoPos(59,holoEntity(24):toWorld(vec(0,0,33)))
+        holoAng(59,holoEntity(24):toWorld(ang(0,0,0)))
+        
+        ##
+        # prism        
+        hlx(47,holoEntity(23),"prism","",vec(1.83,1.21,1.99),Color,holoEntity(23):toWorld(vec(0)),holoEntity(23):toWorld(ang(0)),1,1)
+        
+        hlx(610,holoEntity(23),"prism","",vec(1.4,0.8,1.5),Color,holoEntity(23):toWorld(vec(0,0,22)),holoEntity(23):toWorld(ang(0,0,180)),1,1)
+        
+        hlx(620,holoEntity(24),"prism","",vec(1.4,0.8,1.0),Color,holoEntity(24):toWorld(vec(0,0,14)),holoEntity(24):toWorld(ang(0)),1,1)
+        
+        hlx(630,holoEntity(24),"prism","",vec(1.4,0.8,1.0),Color,holoEntity(24):toWorld(vec(0,0,26)),holoEntity(24):toWorld(ang(0,0,180)),1,1)
+        
+        ###########################################
+        ########################## Back Legs
+    
+        holoCreate(59)
+        holoParent(59,26)
+        holoModel(59,"cube")
+        holoColor(59,vec(0))
+        holoScale(59,vec(1.8,0.8,1.8))
+        holoPos(59,holoEntity(26):toWorld(vec(0,0,0)))
+        holoAng(59,holoEntity(26):toWorld(ang(0,0,0)))
+        
+        hlx(60,holoEntity(26),"prism","",vec(1.1,0.82,1.1),Color,holoEntity(26):toWorld(vec(0)),holoEntity(26):toWorld(ang(180,0,0)),1,1)
+        
+        ###
+        
+        holoCreate(61)
+        holoParent(61,26)
+        holoModel(61,"cube")
+        holoColor(61,vec(0))
+        holoScale(61,vec(1.4,0.6,2))
+        holoPos(61,holoEntity(26):toWorld(vec(0,0,15)))
+        holoAng(61,holoEntity(26):toWorld(ang(0,0,0)))
+    
+        hlx(62,holoEntity(26),"cube","",vec(0.8,0.62,2),Color,holoEntity(26):toWorld(vec(0,0,15)),holoEntity(26):toWorld(ang(0)),1,1)
+        
+        ###
+        
+        holoCreate(63)
+        holoPos(63,holoEntity(27):toWorld(vec(0,0,0)))
+        holoAng(63,holoEntity(27):toWorld(ang(90,0,90)))
+        holoModel(63,"hq_tube")
+        holoParent(63,27)
+        holoScale(63,vec(2,2,1.1))
+        holoColor(63,vec(0))
+        
+        hlx(64,holoEntity(27),"rcylinder_thick","",vec(1.95,1.95,1.05),Color,holoEntity(27):toWorld(vec(0)),holoEntity(27):toWorld(ang(90,0,90)),1,1)
+
+        #########
+        
+        holoCreate(65)
+        holoParent(65,27)
+        holoModel(65,"cube")
+        holoColor(65,vec(0))
+        holoScale(65,vec(1,0.6,2))
+        holoPos(65,holoEntity(27):toWorld(vec(0,0,15)))
+        holoAng(65,holoEntity(27):toWorld(ang(0,0,0)))
+        
+        hlx(66,holoEntity(27),"cube","",vec(0.5,0.62,2),Color,holoEntity(27):toWorld(vec(0,0,15)),holoEntity(27):toWorld(ang(0)),1,1)
+        
+        ########
+        
+        holoCreate(67)
+        holoPos(67,holoEntity(28):toWorld(vec(0,0,0)))
+        holoAng(67,holoEntity(28):toWorld(ang(90,0,90)))
+        holoModel(67,"hq_tube")
+        holoParent(67,28)
+        holoScale(67,vec(1.3,1.3,1))
+        holoColor(67,vec(0))
+        
+        hlx(68,holoEntity(28),"rcylinder_thick","",vec(1.1),Color,holoEntity(28):toWorld(vec(0)),holoEntity(28):toWorld(ang(90,0,90)),1,1)
+        
+        ########
+        
+        holoCreate(69)
+        holoParent(69,28)
+        holoModel(69,"cube")
+        holoColor(69,vec(0))
+        holoScale(69,vec(1,0.6,2))
+        holoPos(69,holoEntity(28):toWorld(vec(0,0,15)))
+        holoAng(69,holoEntity(28):toWorld(ang(0,0,0)))
+        
+        hlx(70,holoEntity(28),"cube","",vec(0.4,0.62,2),Color,holoEntity(28):toWorld(vec(0,0,15)),holoEntity(28):toWorld(ang(0)),1,1)
+        
+        ##################################################
+        ###### Right
+        
+        holoCreate(71)
+        holoParent(71,30)
+        holoModel(71,"cube")
+        holoColor(71,vec(0))
+        holoScale(71,vec(1.8,0.8,1.8))
+        holoPos(71,holoEntity(30):toWorld(vec(0,0,0)))
+        holoAng(71,holoEntity(30):toWorld(ang(0,0,0)))
+        
+        hlx(72,holoEntity(30),"prism","",vec(1.1,0.82,1.1),Color,holoEntity(30):toWorld(vec(0)),holoEntity(30):toWorld(ang(180,0,0)),1,1)
+        
+        ###
+        
+        holoCreate(73)
+        holoParent(73,30)
+        holoModel(73,"cube")
+        holoColor(73,vec(0))
+        holoScale(73,vec(1.4,0.6,2))
+        holoPos(73,holoEntity(30):toWorld(vec(0,0,15)))
+        holoAng(73,holoEntity(30):toWorld(ang(0,0,0)))
+        
+        hlx(74,holoEntity(30),"cube","",vec(0.8,0.62,2),Color,holoEntity(30):toWorld(vec(0,0,15)),holoEntity(30):toWorld(ang(0)),1,1)
+        
+        ###
+        
+        holoCreate(75)
+        holoPos(75,holoEntity(31):toWorld(vec(0,0,0)))
+        holoAng(75,holoEntity(31):toWorld(ang(90,0,90)))
+        holoModel(75,"hq_tube")
+        holoParent(75,31)
+        holoScale(75,vec(2,2,1.1))
+        holoColor(75,vec(0))
+        
+        hlx(76,holoEntity(31),"rcylinder_thick","",vec(1.95,1.95,1.05),Color,holoEntity(31):toWorld(vec(0)),holoEntity(31):toWorld(ang(90,0,90)),1,1)
+        
+        #########
+        
+        holoCreate(77)
+        holoParent(77,31)
+        holoModel(77,"cube")
+        holoColor(77,vec(0))
+        holoScale(77,vec(1,0.6,2))
+        holoPos(77,holoEntity(31):toWorld(vec(0,0,15)))
+        holoAng(77,holoEntity(31):toWorld(ang(0,0,0)))
+        
+        hlx(78,holoEntity(31),"cube","",vec(0.5,0.62,2),Color,holoEntity(31):toWorld(vec(0,0,15)),holoEntity(31):toWorld(ang(0)),1,1)
+        
+        ########
+        
+        holoCreate(79)
+        holoPos(79,holoEntity(32):toWorld(vec(0,0,0)))
+        holoAng(79,holoEntity(32):toWorld(ang(90,0,90)))
+        holoModel(79,"hq_tube")
+        holoParent(79,32)
+        holoScale(79,vec(1.3,1.3,1))
+        holoColor(79,vec(0))
+        
+        hlx(80,holoEntity(32),"rcylinder_thick","",vec(1.1),Color,holoEntity(32):toWorld(vec(0)),holoEntity(32):toWorld(ang(90,0,90)),1,1)
+        
+        ########
+        
+        holoCreate(81)
+        holoParent(81,32)
+        holoModel(81,"cube")
+        holoColor(81,vec(0))
+        holoScale(81,vec(1,0.6,2))
+        holoPos(81,holoEntity(32):toWorld(vec(0,0,15)))
+        holoAng(81,holoEntity(32):toWorld(ang(0,0,0)))
+    
+        hlx(82,holoEntity(32),"cube","",vec(0.4,0.62,2),Color,holoEntity(32):toWorld(vec(0,0,15)),holoEntity(32):toWorld(ang(0)),1,1)
+    }
+}
+    
+if(!holoEntity(83)){
+    while(perf(99)&holoCanCreate()){
+        #############################################################
+        ############################## Body Holos
+    
+        holoCreate(83)
+        holoParent(83,entity())
+        holoModel(83,"cylinder")
+        holoScale(83,vec(2,3,6))
+        holoColor(83,vec(0))
+        holoPos(83,entity():toWorld(vec(0,0,0)))
+        holoAng(83,entity():toWorld(ang(90,0,0)))
+        
+        hlx(84,entity(),"cylinder","",vec(1.4,2.5,3),Color,entity():toWorld(vec(-38,0,0)),entity():toWorld(ang(90,0,0)),1,1)
+
+        ######################################
+        ###### Front Shoulders
+        hlx(85,entity(),"cylinder","",vec(3,6.88,0.6),Color,entity():toWorld(vec(40,22,0)),entity():toWorld(ang(90,90,0)),1,1)
+        
+        holoCreate(86)
+        holoParent(86,entity())
+        holoModel(86,"cylinder")
+        holoScale(86,vec(2.4,6,0.6))
+        holoColor(86,vec(0))
+        holoPos(86,entity():toWorld(vec(40,23,0)))
+        holoAng(86,entity():toWorld(ang(90,90,0)))
+        holoDisableShading(86,1)
+        
+        hlx(87,entity(),"prism","",vec(1.1,0.6,1.1),Color,entity():toWorld(vec(30,23.25,2)),entity():toWorld(ang(0)),1,1)
+        holoCreate(87)
+        holoParent(87,entity())
+        holoModel(87,"prism")
+        holoScale(87,vec(1.1,0.6,1.1))
+        holoColor(87,Color)
+        holoPos(87,entity():toWorld(vec(30,23.25,2)))
+        holoAng(87,entity():toWorld(ang(0,0,0)))
+        holoDisableShading(87,1)
+    }
+}
+if(!holoEntity(88)){
+    while(perf(99)&holoCanCreate()){     
+        ###########
+        hlx(88,entity(),"cylinder","",vec(3,6.88,0.6),Color,entity():toWorld(vec(40,-22,0)),entity():toWorld(ang(90,90,0)),1,1)
+        
+        holoCreate(89)
+        holoParent(89,entity())
+        holoModel(89,"cylinder")
+        holoScale(89,vec(2.4,6,0.6))
+        holoColor(89,vec(0))
+        holoPos(89,entity():toWorld(vec(40,-23,0)))
+        holoAng(89,entity():toWorld(ang(90,90,0)))
+        holoDisableShading(89,1)  
+        
+        hlx(90,entity(),"prism","",vec(1.1,0.6,1.1),Color,entity():toWorld(vec(30,-23.25,2)),entity():toWorld(ang(0)),1,1)
+        
+        hlx(91,entity(),"right_prism","",vec(2,0.65,3.5),Color,entity():toWorld(vec(62,16,12)),entity():toWorld(ang(-10,0,0)),1,1)
+    }
+}
+if(!holoEntity(92)){
+    while(perf(99)&holoCanCreate()){
+        hlx(92,entity(),"right_prism","",vec(2,0.65,3.5),Color,entity():toWorld(vec(62,-16,12)),entity():toWorld(ang(-10,0,0)),1,1)
+        
+        holoCreate(93)
+        holoParent(93,entity())
+        holoModel(93,"cube")
+        holoScale(93,vec(2.1,3,2))
+        holoColor(93,vec(0))
+        holoPos(93,entity():toWorld(vec(48,0,1)))
+        
+        hlx(94,entity(),"cube","",vec(2.105,0.5,2.005),Color,entity():toWorld(vec(48,0,1)),entity():toWorld(ang(0)),1,1)
+        
+        holoCreate(95)
+        holoParent(95,entity())
+        holoModel(95,"right_prism")
+        holoScale(95,vec(3,0.25,3.5))
+        holoColor(95,vec(0))
+        holoPos(95,entity():toWorld(vec(-38,16,12)))
+        holoAng(95,entity():toWorld(ang(-20,0,0)))
+        holoDisableShading(95,1)
+        
+        holoCreate(96)
+        holoParent(96,entity())
+        holoModel(96,"right_prism")
+        holoScale(96,vec(3,0.25,3.5))
+        holoColor(96,vec(0))
+        holoPos(96,entity():toWorld(vec(-38,-16,12)))
+        holoAng(96,entity():toWorld(ang(-20,0,0)))
+        holoDisableShading(96,1)
+        
+        ############################
+        
+        hlx(97,entity(),"cylinder","",vec(2.21,3.01,0.8),Color,entity():toWorld(vec(0)),entity():toWorld(ang(90,0,0)),1,1)
+        
+        hlx(98,entity(),"cylinder","",vec(2.21,3.01,0.8),Color,entity():toWorld(vec(-17,0,0)),entity():toWorld(ang(90,0,0)),1,1)
+        
+        hlx(99,entity(),"cylinder","",vec(2.21,3.01,0.8),Color,entity():toWorld(vec(17,0,0)),entity():toWorld(ang(90,0,0)),1,1)
+        
+        ###################################
+        ########### Back Hip Connector
+        
+        hlx(100,entity(),"cylinder","",vec(0.65,0.65,2),Color,entity():toWorld(vec(-49.5,25,0)),entity():toWorld(ang(90,-50,0)),1,1)
+        
+        hlx(101,entity(),"cylinder","",vec(0.65,0.65,2),Color,entity():toWorld(vec(-49.5,-25,0)),entity():toWorld(ang(90,50,0)),1,1)
+    }
+}
+if(!holoEntity(102)){
+    while(perf(99)&holoCanCreate()){
+        ###########################################
+        ####################### Feet
+        ########## Front Feet
+        ####### Left
+        
+        holoCreate(102)
+        holoParent(102,22)
+        holoModel(102,"cube")
+        holoColor(102,vec(10))
+        holoScale(102,vec(1.5,1.3,0.8))
+        holoPos(102,holoEntity(22):toWorld(vec(0,0,2)))
+        holoAng(102,holoEntity(22):toWorld(ang(0,0,0)))
+        
+        hlx(103,holoEntity(102),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(22):toWorld(vec(14,0,2)),holoEntity(22):toWorld(ang(0)),1,1)
+        
+        hlx(104,holoEntity(102),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(22):toWorld(vec(14,5,2)),holoEntity(22):toWorld(ang(0)),1,1)
+        
+        hlx(105,holoEntity(102),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(22):toWorld(vec(14,-5,2)),holoEntity(22):toWorld(ang(0)),1,1)
+        
+        #################### Right
+        
+        holoCreate(106)
+        holoParent(106,25)
+        holoModel(106,"cube")
+        holoColor(106,vec(10))
+        holoScale(106,vec(1.5,1.3,0.8))
+        holoPos(106,holoEntity(25):toWorld(vec(0,0,2)))
+        holoAng(106,holoEntity(25):toWorld(ang(0,0,0)))
+        
+        hlx(107,holoEntity(25),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(25):toWorld(vec(14,0,2)),holoEntity(25):toWorld(ang(0)),1,1)
+        
+        hlx(108,holoEntity(25),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(25):toWorld(vec(14,5,2)),holoEntity(25):toWorld(ang(0)),1,1)
+        
+        hlx(109,holoEntity(25),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(25):toWorld(vec(14,-5,2)),holoEntity(25):toWorld(ang(0)),1,1)
+    }
+}
+if(!holoEntity(110)){
+    while(perf(99)&holoCanCreate()){
+        ######################### Back Feet
+        ################ Left
+        
+        holoCreate(110)
+        holoParent(110,29)
+        holoModel(110,"cube")
+        holoColor(110,vec(10))
+        holoScale(110,vec(1.5,1.3,0.8))
+        holoPos(110,holoEntity(29):toWorld(vec(0,0,2)))
+        holoAng(110,holoEntity(29):toWorld(ang(0,0,0)))
+        
+        hlx(111,holoEntity(110),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(29):toWorld(vec(14,0,2)),holoEntity(29):toWorld(ang(0)),1,1)
+        
+        hlx(112,holoEntity(110),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(29):toWorld(vec(14,5,2)),holoEntity(29):toWorld(ang(0)),1,1)
+        
+        hlx(113,holoEntity(110),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(29):toWorld(vec(14,-5,2)),holoEntity(29):toWorld(ang(0)),1,1)
+        
+        #################### Right
+        
+        holoCreate(114)
+        holoParent(114,33)
+        holoModel(114,"cube")
+        holoColor(114,vec(10))
+        holoScale(114,vec(1.5,1.3,0.8))
+        holoPos(114,holoEntity(33):toWorld(vec(0,0,2)))
+        holoAng(114,holoEntity(33):toWorld(ang(0,0,0)))
+        
+        hlx(115,holoEntity(114),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(33):toWorld(vec(14,0,2)),holoEntity(33):toWorld(ang(0)),1,1)
+        
+        hlx(116,holoEntity(114),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(33):toWorld(vec(14,5,2)),holoEntity(33):toWorld(ang(0)),1,1)
+        
+        hlx(117,holoEntity(114),"right_prism","",vec(1.3,0.2,0.8),Color,holoEntity(33):toWorld(vec(14,-5,2)),holoEntity(33):toWorld(ang(0)),1,1)
+        
+        ###############
+        
+        hlx(118,holoEntity(32),"cube","",vec(1.3,1.35,0.4),Color,holoEntity(32):toWorld(vec(0,0,22)),holoEntity(32):toWorld(ang(0)),1,1)
+        
+        hlx(119,holoEntity(28),"cube","",vec(1.3,1.35,0.4),Color,holoEntity(28):toWorld(vec(0,0,22)),holoEntity(28):toWorld(ang(0)),1,1)
+        
+        ########################################################
+        ####################################### Neck
+        hlx(121,entity(),"cylinder","",vec(1.4,2.2,0.5),Color,entity():toWorld(vec(63,0,2)),entity():toWorld(ang(90,0,0)),1,1)
+        
+        holoCreate(122)
+        holoParent(122,121)
+        holoModel(122,"cylinder")
+        holoColor(122,vec(0))
+        holoScale(122,vec(1.4,2.2,0.7))
+        holoPos(122,holoEntity(121):toWorld(vec(0,0,7.175)))
+        holoAng(122,holoEntity(121):toWorld(ang(0,0,0)))
+        
+        hlx(123,holoEntity(122),"cylinder","",vec(1.4,2.2,0.5),Color,holoEntity(122):toWorld(vec(0,0,7.175)),holoEntity(122):toWorld(ang(0,0,0)),1,1)
+
+        holoCreate(124)
+        holoParent(124,123)
+        holoModel(124,"hq_cubinder")
+        holoColor(124,vec(0))
+        holoScale(124,vec(1.4,2.2,0.5))
+        holoPos(124,holoEntity(123):toWorld(vec(0,0,6)))
+        holoAng(124,holoEntity(123):toWorld(ang(0,0,180)))
+        holoDisableShading(124,1)
+    }
+}
+if(!holoEntity(125)){
+    while(perf(99)&holoCanCreate()){
+        #######################################
+        ####################### Head
+        holoCreate(125)
+        holoParent(125,124)
+        holoModel(125,"rcube")
+        holoScale(125,vec(2.4,3.0,1.1))
+        holoColor(125,vec(0))
+        holoPos(125,holoEntity(124):toWorld(vec(0,0,-8)))
+        holoAng(125,holoEntity(124):toWorld(ang(0,0,0)))
+        
+        ########################
+        ## Snout
+        holoCreate(126)
+        holoParent(126,125)
+        holoModel(126,"rcube")
+        holoScale(126,vec(0.5,2,3))
+        holoColor(126,vec(0))
+        holoPos(126,holoEntity(125):toWorld(vec(-2,0,-20)))
+        holoAng(126,holoEntity(125):toWorld(ang(0,0,0)))
+        
+        holoCreate(127)
+        holoParent(127,125)
+        holoModel(127,"rcube")
+        holoScale(127,vec(0.45,1.8,3))
+        holoColor(127,vec(0))
+        holoPos(127,holoEntity(125):toWorld(vec(7.25,0,-16)))
+        holoAng(127,holoEntity(125):toWorld(ang(0,0,0)))
+        
+        holoCreate(128)
+        holoParent(128,125)
+        holoModel(128,"hq_stube")
+        holoScale(128,vec(2.0,0.75,0.5))
+        holoColor(128,vec(0))
+        holoPos(128,holoEntity(125):toWorld(vec(-7.8,0,-9)))
+        holoAng(128,holoEntity(125):toWorld(ang(0,90,0)))
+        
+        #######################
+        ## Eyes
+        
+        hlx(129,holoEntity(128),"rcube_thick","",vec(1.95,0.7,0.4),Color,holoEntity(128):toWorld(vec(0,0,-0.75)),holoEntity(128):toWorld(ang(0,0,0)),1,1)
+        
+        holoCreate(130)
+        holoParent(130,129)
+        holoAlpha(130,0)
+        holoPos(130,holoEntity(129):toWorld(vec(0,0,0)))
+        holoAng(130,entity():toWorld(ang(0,0,0)))
+    }
+}
+
+if(!holoEntity(131)){
+    while(perf(99)&holoCanCreate()){
+        ########################
+        ## Ears
+        hlx(131,holoEntity(125),"tetra","",vec(0.9,0.9,1.6),Color,holoEntity(125):toWorld(vec(-15,10,3)),entity():toWorld(ang(-30,0,30)),1,1)
+        
+        hlx(132,holoEntity(125),"tetra","",vec(0.9,0.9,1.6),Color,holoEntity(125):toWorld(vec(-15,-10,3)),entity():toWorld(ang(-30,0,-30)),1,1)
+        
+        #########################################
+        ######################## Teeth
+        ########### Top Teeth
+        ## Right
+        hlx(133,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,8,11)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(134,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,8,7)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(135,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,8,3)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(136,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,8,-1)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(137,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,8,-5)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(138,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,8,-9)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(139,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,8,-13)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(140,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,6,-13.5)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(141,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.65),Color,holoEntity(126):toWorld(vec(5.5,2.5,-15.85)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        ########### Left Side
+        
+        hlx(142,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,-8,11)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+
+        hlx(143,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,-8,7)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(144,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,-8,3)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(145,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,-8,-1)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+    }
+}
+if(!holoEntity(146)){
+    while(perf(99)&holoCanCreate()){
+        ###############################################################
+        hlx(146,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,-8,-5)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(147,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,-8,-9)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(148,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,-8,-13)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(149,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(126):toWorld(vec(4.5,-6,-13.5)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        hlx(150,holoEntity(126),"hq_cone","",vec(0.3,0.3,0.65),Color,holoEntity(126):toWorld(vec(5.5,-2.5,-15.85)),holoEntity(126):toWorld(ang(90,0,0)),1,1)
+        
+        #########################################
+        ############# Bottom Teeth
+        ## Right
+        hlx(151,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,8,9)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+
+        hlx(152,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,8,5)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(153,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,8,1)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(154,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,8,-3)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(155,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,8,-7)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(156,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,8,-11)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(157,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,6,-15)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+    }
+}
+if(!holoEntity(161)){
+    while(perf(99)&holoCanCreate()){
+        ################
+        ## Left
+        hlx(158,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,-8,9)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+
+        hlx(159,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,-8,5)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(160,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,-8,1)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(161,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,-8,-3)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(162,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,-8,-7)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(163,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,-8,-11)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(164,holoEntity(127),"hq_cone","",vec(0.3,0.3,0.3),Color,holoEntity(127):toWorld(vec(-4.5,-6,-15)),holoEntity(127):toWorld(ang(-90,0,0)),1,1)
+        
+        hlx(165,holoEntity(126),"rcube","",vec(0.1,2.02,3.02),Color,holoEntity(126):toWorld(vec(0,0,0)),holoEntity(126):toWorld(ang(0,0,0)),1,1)
+    }
+}
+
+if(!holoEntity(166)){
+    while(perf(99)&holoCanCreate()){
+        hlx(166,holoEntity(126),"prism","",vec(0.8,0.1,0.8),Color,holoEntity(126):toWorld(vec(-3,0,-8)),holoEntity(126):toWorld(ang(0,90,0)),1,1)
+    }
+}
+
+if(!holoEntity(167)){
+    while(perf(99)&holoCanCreate()){
+        ############3 Gun
+        holoCreate(167)
+        holoParent(167,entity())
+        holoModel(167,"hq_icosphere")
+        holoScale(167,vec(1.5,1.5,1.5))
+        holoColor(167,vec(0))
+        holoPos(167,entity():toWorld(vec(-40,0,5)))
+        
+        hlx(168,holoEntity(167),"cube","",vec(0.4,0.1,1),Color,holoEntity(167):toWorld(vec(2,0,8)),holoEntity(167):toWorld(ang(0,90,0)),1,1)
+        
+        hlx(169,holoEntity(167),"cube","",vec(0.4,0.1,1),Color,holoEntity(167):toWorld(vec(-2,0,8)),holoEntity(167):toWorld(ang(0,90,-20)),1,1)
+        
+        holoCreate(170)
+        holoParent(170,167)
+        holoModel(170,"cube")
+        holoScale(170,vec(2.5,0.8,2))
+        holoColor(170,vec(0))
+        holoPos(170,holoEntity(167):toWorld(vec(2,0,23)))
+        holoAng(170,holoEntity(157):toWorld(ang(0,180,0)))
+        
+        ###############################
+        
+        holoCreate(171)
+        holoParent(171,170)
+        holoModel(171,"cube")
+        holoScale(171,vec(3.5,0.3,0.6))
+        holoColor(171,vec(0))
+        holoPos(171,holoEntity(170):toWorld(vec(31,0,-7)))
+        holoAng(171,holoEntity(170):toWorld(ang(0,0,0)))
+        
+        holoCreate(172)
+        holoParent(172,170)
+        holoModel(172,"cube")
+        holoScale(172,vec(3.5,0.3,0.6))
+        holoColor(172,vec(0))
+        holoPos(172,holoEntity(170):toWorld(vec(31,0,7)))
+        holoAng(172,holoEntity(170):toWorld(ang(0,0,0)))
+        
+        #############################
+        hlx(173,holoEntity(170),"cube","",vec(0.3,0.5,1.9),Color,holoEntity(170):toWorld(vec(19,0,0)),holoEntity(170):toWorld(ang(0,0,0)),1,1)
+        
+        ######
+        ##################################
+        #### Detail
+        hlx(174,holoEntity(170),"hq_tube","",vec(0.8,0.8,0.9),Color,holoEntity(170):toWorld(vec(-2,0,0)),holoEntity(170):toWorld(ang(0,0,90)),1,1)
+        
+        hlx(175,holoEntity(170),"hq_tube","",vec(0.4,0.4,0.9),Color,holoEntity(170):toWorld(vec(-2,0,0)),holoEntity(170):toWorld(ang(0,0,90)),1,1)
+        
+        hlx(176,holoEntity(170),"cube","",vec(0.7,0.9,0.1),Color,holoEntity(170):toWorld(vec(-8,0,0)),holoEntity(170):toWorld(ang(0,0,0)),1,1)
+        
+        hlx(177,holoEntity(170),"cube","",vec(1.25,0.9,0.1),Color,holoEntity(170):toWorld(vec(6.8,0,-4)),holoEntity(170):toWorld(ang(20,0,0)),1,1)
+        
+        hlx(178,holoEntity(170),"cube","",vec(1.25,0.9,0.1),Color,holoEntity(170):toWorld(vec(6.8,0,4)),holoEntity(170):toWorld(ang(-20,0,0)),1,1)
+    }
+}
+if(!holoEntity(179)){
+    while(perf(99)&holoCanCreate()){        
+        ###################
+        # Barrel Detail
+        hlx(179,holoEntity(171),"cube","",vec(1.25,0.9,0.1),Color,holoEntity(171):toWorld(vec(-10,0,0)),holoEntity(171):toWorld(ang(0,0,0)),1,1)
+        
+        hlx(180,holoEntity(172),"cube","",vec(1.25,0.31,0.1),Color,holoEntity(172):toWorld(vec(-10,0,0)),holoEntity(172):toWorld(ang(0,0,0)),1,1)
+        
+        
+        hlx(181,holoEntity(171),"hq_tube","",vec(0.5,0.5,0.31),Color,holoEntity(171):toWorld(vec(0,0,0)),holoEntity(171):toWorld(ang(0,0,90)),1,1)
+        
+        hlx(182,holoEntity(172),"hq_tube","",vec(0.5,0.5,0.31),Color,holoEntity(172):toWorld(vec(0,0,0)),holoEntity(172):toWorld(ang(0,0,90)),1,1)
+
+        hlx(183,holoEntity(171),"cube","",vec(0.7,0.31,0.1),Color,holoEntity(171):toWorld(vec(7,0,0)),holoEntity(171):toWorld(ang(0,0,0)),1,1)
+
+        hlx(184,holoEntity(172),"cube","",vec(0.7,0.31,0.1),Color,holoEntity(172):toWorld(vec(7,0,0)),holoEntity(172):toWorld(ang(0,0,0)),1,1)
+
+        hlx(185,holoEntity(171),"cube","",vec(0.5,0.31,0.1),Color,holoEntity(171):toWorld(vec(13.5,0,1.5)),holoEntity(171):toWorld(ang(-30,0,0)),1,1)
+        
+        hlx(186,holoEntity(172),"cube","",vec(0.5,0.31,0.1),Color,holoEntity(172):toWorld(vec(13.5,0,-1.5)),holoEntity(172):toWorld(ang(30,0,0)),1,1)
+    
+    }
+}
+
+if(!holoEntity(187)){
+    while(perf(99)&holoCanCreate()){
+        holoCreate(187)
+        holoParent(187,0)
+        holoModel(187,"models/xeon133/slider/slider_bar_10x10x1536.mdl")
+        holoMaterial(187,"models/debug/debugwhite")
+        holoAlpha(187,130)
+        holoScale(187,vec(1.0,0.3,0.3))
+        holoColor(187,vec(255,0,0))
+        holoClipEnabled(187,1,1)
+        holoPos(187,holoEntity(0):toWorld(vec(0,0,0)))
+
+        holoCreate(188)
+        holoParent(188,0)
+        holoModel(188,"models/xeon133/slider/slider_bar_10x10x1536.mdl")
+        holoMaterial(188,"effects/tvscreen_noise002a")
+        holoAlpha(188,95)
+        holoScale(188,vec(1,0.6,0.6))
+        holoClipEnabled(188,1,1)
+        holoPos(188,holoEntity(130):toWorld(vec(0,0,0)))
+        holoDisableShading(188,1)
+        
+        holoCreate(202)
+        holoParent(202,125)
+        holoColor(202,vec(255,0,0))
+        holoAlpha(202,0)
+        holoScale(202,vec(0.75,0.75,0.75))
+        holoModel(202,"models/balloons/balloon_classicheart.mdl")
+        holoMaterial(202,"models/debug/debugwhite")
+        holoPos(202,holoEntity(125):toWorld(vec(0,0,30))) 
+        holoAng(202,entity():toWorld(ang(0,90,0)))
+        holoDisableShading(202,1)
+        
+        hlx(203,holoEntity(127),"rcube","",vec(0.46,0.5,3.01),Color,holoEntity(125):toWorld(vec(7.25,0,-16)),holoEntity(125):toWorld(ang(0,0,0)),1,1)
+        
+        entity():propFreeze(0)
+    }
+}
+
+##include "assyria_main"
+
+interval(60)
+if(holoEntity(202)){
+    refreshing()
+    NewMode()
+    
+    local Sin = sin((Time*10)*5)
+    holoAng(127,holoEntity(125):toWorld(ang((Sin*8)-8,0,0)))
+    
+    # [ ---- Petting Functionality ---- ] #
+    
+    foreach(K,V:entity = players()){
+        if(V:pos():distance(holoEntity(125):pos()) < 125 && V:keyUse() && !HeartActive){
+            #ifdef entity:plySetHealth(number)
+                if(V:health() < 100){
+                    V:plySetHealth(clamp(V:health() + 20,0,100))
+                    V:soundPlay("HealthRegen",3,"WallHealth.Start")
+                }
+            #endif
+            #ifdef entity:plySetArmor(number)
+                if(V:armor() < 100){
+                    V:plySetArmor(clamp(V:armor() + 20,0,100))
+                    holoEntity(125):soundPlay("ArmorRegen",3,"TriggerSuperArmor.StartCharging")
+                }
+            #endif
+            HeartActive = 1
+        }else{
+            holoAlpha(202,0)
+        }
+    }   
+    
+    if(HeartActive){
+        holoAlpha(202,150)
+        
+        local HDT = Time - SavedTime 
+        local SegmentLength = 2 
+        local Up = HDT/SegmentLength
+                
+        if(HDT < SegmentLength){
+            holoPos(202,holoEntity(125):toWorld(vec(-35*Up,0,0)))
+        }else{
+            holoPos(202,holoEntity(125):toWorld(vec(0,0,0)))
+            holoAlpha(202,0)
+        
+            HeartActive = 0
+            SavedTime = Time
+        }
+    }
+    ##include "libraries/mechs/raiju/attacks"
+    if(isDriverCurrentlyValid()){        
+        local ActualTargetAngle = Driver:eye():toAngle()
+        local EulerLimitation = E:toWorld(clamp(E:toLocal(ActualTargetAngle),ang(-10,-20,-0),ang(30,20,0))) + ang(90,0,0)
+        local EasyLerping = slerp(quat(holoEntity(121):angles()),quat(EulerLimitation),0.1) 
+        holoAng(121,EasyLerping:toAngle())
+        
+        Keys["Roar",number] = Driver:keyPressed("T")
+        if(changed(Keys["Roar",number]) & Keys["Roar",number]){
+            holoEntity(121):soundPlay("Roar",0,"npc/dog/dog_angry" + randint(1,3) + ".wav")
+        }
+        
+        #############################################
+        
+        local GunHolo = holoEntity(170)
+        if(State & !Ring:isValid()){
+            Ring = propSpawn("models/hunter/plates/plate1x1.mdl",GunHolo:toWorld(vec(0,0,0)),ang(0,0,0),1)
+            Ring:setAlpha(0)
+            Ring:propNotSolid(1)
+            Ring:setMass(50000)
+            
+            holoCreate(250)
+            holoModel(250,"models/sprops/trans/misc/coil.mdl")
+            holoMaterial(250,"models/debug/debugwhite")
+            holoPos(250,Ring:toWorld(vec(0,0,-2)))
+            holoAng(250,Ring:toWorld(ang(0,0,0)))
+            holoScale(250,vec(10,10,0.3))
+            holoParent(250,Ring)
+            holoDisableShading(250,1)
+            holoColor(250,vec4(0,125,255,10))
+            
+            holoCreate(251)
+            holoPos(251,Ring:toWorld(vec(30,0,0)))
+            holoAng(251,Ring:toWorld(ang(0,0,0)))
+            holoAlpha(251,0)
+            holoParent(251,250)
+            holoEntity(251):setTrails(30,5,1.5,"trails/laser",vec(0,125,255),255)
+    
+            holoCreate(252)
+            holoPos(252,Ring:toWorld(vec(-30,0,0)))
+            holoAng(252,Ring:toWorld(ang(0,0,0)))
+            holoAlpha(252,0)
+            holoParent(252,250) 
+            holoEntity(252):setTrails(30,5,1.5,"trails/laser",vec(0,125,255),255)
+
+            holoCreate(253)
+            holoPos(253,Ring:toWorld(vec(0,30,0)))
+            holoAng(253,Ring:toWorld(ang(0,0,0)))
+            holoAlpha(253,0)
+            holoParent(253,250)
+            holoEntity(253):setTrails(30,5,1.5,"trails/laser",vec(0,125,255),255)
+    
+            holoCreate(254)
+            holoPos(254,Ring:toWorld(vec(0,-30,0)))
+            holoAng(254,Ring:toWorld(ang(0,0,0)))
+            holoAlpha(254,0)
+            holoParent(254,250) 
+            holoEntity(254):setTrails(30,5,1.5,"trails/laser",vec(0,125,255),255)
+        }elseif(State & Ring:isValid()){
+            local DT = Time - SavedTime
+    
+            switch(State){        
+                case 1,
+                    local StateLength = 2
+                    if(DT <= StateLength){
+                        local Dampen = (DT/StateLength)^(1/3)
+                
+                        Ring:setPos(StartPos*(1-Dampen) + TargetPos*Dampen )
+                
+                        local SearchPlayer = findClosestPlayer(Ring:pos(),200,array(Driver:steamID()))
+                
+                        if(SearchPlayer:isValid()){
+                            State = 2
+                            SavedTime = Time
+                    
+                            StartPos = Ring:pos()     
+                                   
+                            Victim = SearchPlayer
+                            PreviousVictims:pushString(Victim:steamID())
+                    
+                            Seat:printDriver("firstTarget | " + Victim:name())
+                            IsFriend = strInArray(Victim:steamID(),Friends)
+                        }
+                    }else{
+                        State = 3
+                        SavedTime = Time
+                        StartPos = Ring:pos()
+                    }
+                break
+        
+                case 2,
+                    local StateLength = 0.5
+            
+                    if(DT <= StateLength){
+                        local Dampen = (DT/StateLength)^(1/3)
+                    
+                        Ring:setPos(StartPos*(1-Dampen) + Victim:toWorld(vec(0,0,30))*Dampen)
+                    }else{
+                        if(IsFriend){
+                            #ifdef entity:plySetHealth(number)
+                                if(Victim:health() < 100){
+                                    Victim:plySetHealth(clamp(Victim:health() + 50,0,100))
+                                }
+                            #endif
+                        }else{
+                            Ring:soundPlay("ZapSounds",2,Sound[randint(1,Sound:count()),string])
+                            if(hostip() == "147.135.121.228"){
+                                local RingBoom = propSpawn("models/props_phx/ww2bomb.mdl",Victim:pos(),1)
+                                RingBoom:propBreak()
+                            }else{
+                                boomCustom(7,Victim:pos(),50,100)
+                            } 
+                        }
+    
+                    local SearchPlayer = findClosestPlayer(Ring:pos(),600,PreviousVictims)
+
+                    if(SearchPlayer:isValid()){
+                        SavedTime = Time
+                        StartPos = Ring:pos()     
+              
+                        Victim = SearchPlayer
+                        PreviousVictims:pushString(Victim:steamID())
+                        Seat:printDriver(Victim:name())
+                    
+                        IsFriend = strInArray(Victim:steamID(),Friends)
+                    }else{   
+                        State = 3
+                        SavedTime = Time
+                        StartPos = Ring:pos()
+                    
+                        PreviousVictims = array(Driver:steamID())
+                    }
+                } 
+                break
+        
+                case 3,
+                    local StateLength = 1
+                    if(DT <= StateLength){
+                        local Dampen = (DT/StateLength)^(1/2)
+                
+                        Ring:setPos(StartPos*(1-Dampen) + GunHolo:toWorld(vec(0,0,0))*Dampen)  
+                    }else{
+                        State = 0
+                    }
+                break
+            }
+            holoAng(250,Ring:toWorld(ang(0,1000*curtime(),0)))
+        }else{
+            Ring:propDelete()
+        }
+        
+        if(Ring:isValid()){
+            Pos = Ring:pos()
+        }else{
+            Pos = Driver:eyeTraceCursor():position()
+        }
+        
+        local TX = -elevation(holoEntity(170):pos(),ang(0),Pos)
+        local TY = -bearing(holoEntity(170):pos(),ang(0),Pos)
+        
+        AimDir = lerpVec(AimDir,ang(TX,TY,0):forward():normalized(),tickInterval() * 7)
+        holoAng(170,AimDir:toAngle())
+        
+        Keys["FireInput",number] = Driver:keyAttack1()
+        if(changed(Keys["FireInput",number]) & Keys["FireInput",number]){
+            local ShootPos = GunHolo:toWorld(vec(0,0,0))
+            local R = rangerOffset(1450,GunHolo:pos(),GunHolo:forward())
+        
+            StartPos = ShootPos
+            TargetPos = R:position()
+            SavedTime = Time
+    
+            State = 1
+            GunHolo:soundPlay("RingFiring",4,"ambient/levels/citadel/zapper_warmup1.wav")
+        }
+        
+        ###################################
+        ####### Laser
+
+        if(Charging){
+            local Dir = holoEntity(130):forward()
+            local LaserRanger = rangerOffset(2000,holoEntity(130):pos(),Dir)
+            
+            holoPos(187,holoEntity(130):toWorld(vec(770,0,0)))
+            holoAng(187,holoEntity(130):toWorld(ang(0,0,Spin)))
+
+            holoPos(188,holoEntity(130):toWorld(vec(770,0,0)))
+            holoAng(188,holoEntity(130):toWorld(ang(0,0,Spin)))
+            
+            
+            holoAlpha(187,130)
+            holoColor(187,vec(randint(0,50),randint(0,50),randint(100,255)))
+            
+            holoAlpha(188,100)
+            
+            local SegmentLength = 1
+            
+            local LDT = Time - SavedTime
+            local Anim = (LDT <= SegmentLength)
+            if(Anim){
+                local Up = LDT/SegmentLength
+                holoScale(187,vec(1,0.3*Up,0.3*Up))
+                holoScale(188,vec(1,0.6*Up,0.6*Up))
+            }
+            
+            if(changed(Anim) & !Anim){
+                holoScale(187,vec(1,0.3,0.3))      
+                holoScale(188,vec(1,0.6,0.6))  
+            }
+            local Hit = LaserRanger:hit()
+            if(Hit){
+                HitPos = LaserRanger:position()
+    
+                holoClip(187,1,HitPos,-holoEntity(187):forward(),1)
+                holoClip(188,1,HitPos,-holoEntity(188):forward(),1)
+            }
+            if(changed(Hit)){
+                if(Hit){
+                    holoClipEnabled(187,1,1)
+                    holoClipEnabled(188,1,1)
+                }else{
+                    holoClipEnabled(187,1,0)
+                    holoClipEnabled(188,1,0)
+                }
+            }
+            local RealTime = realtime()
+            if(Hit & RealTime > ShootTimer){
+                ShootTimer = RealTime + 0.35
+                local LaProp = propSpawn("models/props_phx/ww2bomb.mdl",HitPos,1)
+                LaProp:propBreak()
+            }
+            if(Time > ChargeTimer){
+                Charging = 0
+            }
+        }elseif(Finished == 0 & Time > CooldownTimer){
+            holoAlpha(187,0)
+            holoScale(187,vec(0))  
+            
+            holoAlpha(188,0)    
+            holoScale(188,vec(0)) 
+            Finished = 1
+        }
+
+        Keys["LaserInput",number] = Driver:keyAttack2()
+        if(changed(Keys["LaserInput",number]) & Keys["LaserInput",number]){
+            prepareLaser()
+        }
+    }else{
+        Ring:propDelete()
+        State = 0
+        
+        holoAlpha(187,0)
+        holoAlpha(188,0)
+        
+        Charging = 0
+        Finished = 1
+        
+        soundStop("LaserSound")
+    }
+}
+
+#else
+    E:soundPlay("propcore_not_available", 0, "buttons/combine_button7.wav")
+    printColor(vec(255), "[", vec(40,255,100), "Raiju Next Gen", vec(255), "]: ", vec(255,0,0), "PropCore is not available on this server. ", vec(0,255,255), E:getName(), " has been deleted.")
+    selfDestructAll()
+#endif
+
+#ifdef holoMaxAmount()  
+    switch ( holoMaxAmount() >= 225 ){
+        case 1,
+        break   
+
+        case 0,
+            E:soundPlay("holocore_settings_low", 0, "buttons/combine_button1.wav")
+            printColor(vec(255), "[", vec(40,255,100), "Raiju Next Gen", vec(255), "]: ", vec(0,255,255), "Hologram limit is too low. ", vec(255), "[", vec(0,255,255), E:getName(), vec(255), "]", vec(0,255,255), " has been deleted.")
+            selfDestructAll()
+        break   
+        
+    }
+#else
+    E:soundPlay("holocore_not_available", 0, "buttons/combine_button1.wav")
+    printColor(vec(255), "[", vec(40,255,100), "Raiju Next Gen", vec(255), "]: ", vec(255,0,0), "HoloCore is not available on this server. ", vec(0,255,255), E:getName(), " has been deleted.")
+    selfDestructAll()
+#endif

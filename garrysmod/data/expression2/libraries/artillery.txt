@@ -1,0 +1,121 @@
+@persist [ArtilleryData ATTransmutationQueue Projects]:array [Artillery]:table
+#include "libraries/multi-holo"
+if(first()){    
+    ArtilleryData = array(
+        "models/mechanics/robotics/a1.mdl",
+        "models/props_vents/borealis_vent001c",
+        "models/props_combine/combine_mortar01b.mdl",
+        "models/props_combine/combine_mortar01b.mdl",
+        "models/props_combine/combinethumper002.mdl",
+        "models/props_combine/combine_smallmonitor001.mdl",
+        "models/props_phx/construct/metal_plate_curve360.mdl",
+        "models/props_phx/construct/metal_plate_curve360.mdl",
+        
+        "models/props_vents/borealis_vent001c",
+        "models/props_vents/borealis_vent001c",
+        "models/props_vents/borealis_vent001c",
+        "models/props_vents/borealis_vent001c",
+        "models/props_vents/borealis_vent001c",
+        "models/props_vents/borealis_vent001c",
+        "models/debug/debugwhite",
+        "models/debug/debugwhite",
+        
+        vec(3,0.6,0.6),
+        vec(0.4,0.2,0.7),
+        vec(0.4,0.4,0.7),
+        vec(0.4,0.4,0.7),
+        vec(0.3,0.3,0.5),
+        vec(0.8),
+        vec(0.5,0.5,0.15),
+        vec(0.3,0.3,0.1),
+        
+        vec(15,0,0),
+        vec(4,0,6),
+        vec(-35,0,0),
+        vec(-35,0,0),
+        vec(-35,4,-9),
+        vec(-45,-10,0),
+        vec(-20,0,0),
+        vec(34,0,0),
+        
+        ang(0,0,0),
+        ang(-86,180,0),
+        ang(0,90,90),
+        ang(0,-90,-90),
+        ang(0,-90,-90),
+        ang(0,0,-90),
+        ang(90,0,0),
+        ang(90,0,0),
+        
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,255,255,255),
+        vec4(255,0,0,150),
+        vec4(255,0,0,150),
+        
+        0,0,0,0,0,0,1,1
+    )
+
+    ArtilleryData[0,number] = 8
+    
+    function void transmuteArtillery(Entity:entity){
+        ATTransmutationQueue:pushEntity(Entity)
+    }
+    
+    function void artilleryFunctionality(Fire,HitPos:vector,Firemode){
+        if(ATTransmutationQueue:count() > 0 & holoRemainingSpawns() > 8){
+            if(ATTransmutationQueue[1,entity]:isValid()){
+                local HoloArray = multiHolo(ATTransmutationQueue[1,entity],ArtilleryData)
+                
+                Artillery:pushTable(table(ATTransmutationQueue[1,entity],HoloArray))
+                ATTransmutationQueue[1,entity]:setAlpha(0)
+                ATTransmutationQueue[1,entity]:propFreeze(1)
+            }
+            ATTransmutationQueue:remove(1)
+        }
+        
+        local BLC = Artillery:count()
+        
+        for(I=1,BLC){
+            local CurrGun = Artillery[I,table][1,entity]
+            
+            local V = 3500
+            local G = gravity()
+            
+            local EndPos = CurrGun:pos()
+            
+            local X = sqrt((EndPos:x()-HitPos:x())^2 + (EndPos:y()-HitPos:y())^2)
+            local H = HitPos:z()-EndPos:z()
+            
+            local TX = -atan((V^2+sqrt(V^4-G*(G*X^2+2*H*V^2))*(1-2*Firemode))/(G*X))
+            local TY = -bearing(CurrGun:pos(),ang(0,0,0),HitPos) 
+            
+            CurrGun:setAng(ang(TX,TY,0))
+            
+            local DesiredAngle = ang(TX,TY,0)
+        
+            if(CurrGun == noentity()){
+                Artillery:remove(I)
+            }
+            CurrGun:setAng(DesiredAngle)
+            CurrGun:applyAngForce(-CurrGun:angVel()*16)
+        }
+        
+        if(changed(Fire) & Fire & BLC > 0){
+            for(I=1,BLC){
+                local CurrGunEnt = Artillery[I,table][1,entity]
+                local Bomb = propSpawn("models/props_phx/ball.mdl",CurrGunEnt:toWorld(vec(0,0,0)),CurrGunEnt:eyeAngles(),0)
+                Bomb:setMass(50000)
+                Bomb:propDrag(0)
+                Bomb:setTrails(65,0,20,"trails/laser",vec(255,0,0),255)
+                Bomb:applyForce(Bomb:forward()*3500*Bomb:mass())
+                
+                CurrGunEnt:soundPlay(I+10,3,"acf_extra/tankfx/guns/cannon.wav")
+                soundPitch(I+10,80)
+            }
+        }  
+    }
+}
